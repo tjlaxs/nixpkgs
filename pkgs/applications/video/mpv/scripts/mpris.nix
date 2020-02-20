@@ -1,19 +1,19 @@
-{ stdenv, fetchFromGitHub, pkgconfig, gobjectIntrospection, mpv }:
+{ stdenv, fetchFromGitHub, pkgconfig, gobject-introspection, mpv }:
 
 stdenv.mkDerivation rec {
   name = "mpv-mpris-${version}.so";
-  version = "0.2";
+  version = "0.3";
 
   src = fetchFromGitHub {
     owner = "hoyon";
     repo = "mpv-mpris";
     rev = version;
-    sha256 = "06hq3j1jjlaaz9ss5l7illxz8vm5bng86jl24kawglwkqayhdnjx";
+    sha256 = "02lqsgp296s8wr0yh6wm8h7nhn53rj254zahpzbwdv15apgy0z17";
   };
 
   nativeBuildInputs = [ pkgconfig ];
 
-  buildInputs = [ gobjectIntrospection mpv ];
+  buildInputs = [ gobject-introspection mpv ];
 
   installPhase = ''
     cp mpris.so $out

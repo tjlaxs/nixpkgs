@@ -1,15 +1,16 @@
-{ stdenv, fetchurl, gfortran }:
+{ stdenv, fetchurl, gfortran, zlib }:
 
 stdenv.mkDerivation rec {
-  name = "QCDNUM-${version}";
-  version = "17-01-14";
+  pname = "QCDNUM";
+  version = "17-01-15";
 
   src = fetchurl {
     url = "http://www.nikhef.nl/user/h24/qcdnum-files/download/qcdnum${builtins.replaceStrings ["-"] [""] version}.tar.gz";
-    sha256 = "199s6kgmszxgjzd9214mpx3kyplq2q6987sii67s5xkg10ynyv31";
+    sha256 = "0ibk1sppss45qh0g8i2c99alkx82xdbss3p55f5367bxjx4iqvvg";
   };
 
   nativeBuildInputs = [ gfortran ];
+  buildInputs = [ zlib ];
 
   enableParallelBuilding = true;
 

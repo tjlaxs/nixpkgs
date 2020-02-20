@@ -1,8 +1,8 @@
-{ lib, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoPackage, fetchFromGitHub, nixosTests }:
 
 buildGoPackage rec {
-  name = "restic-${version}";
-  version = "0.9.2";
+  pname = "restic";
+  version = "0.9.6";
 
   goPackagePath = "github.com/restic/restic";
 
@@ -10,13 +10,15 @@ buildGoPackage rec {
     owner = "restic";
     repo = "restic";
     rev = "v${version}";
-    sha256 = "0kl8yk636i3y7f2kd43pydjh4pv7hhq09p5k54jlysnrbf2kjb4h";
+    sha256 = "0lydll93n1lcn1fl669b9cikmzz9d6vfpc8ky3ng5fi8kj3v1dz7";
   };
 
   buildPhase = ''
     cd go/src/${goPackagePath}
     go run build.go
   '';
+
+  passthru.tests.restic = nixosTests.restic;
 
   installPhase = ''
     mkdir -p \

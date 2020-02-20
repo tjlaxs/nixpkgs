@@ -1,22 +1,24 @@
 { lib, stdenv, fetchFromGitHub, autoreconfHook, pkgconfig
-, libX11, libXcomposite, libXft, libXmu, pam, apacheHttpd, imagemagick
-, pamtester, xscreensaver, xset }:
+, libX11, libXcomposite, libXft, libXmu, libXrandr, libXext, libXScrnSaver
+, pam, apacheHttpd, imagemagick, pamtester, xscreensaver, xset }:
 
 stdenv.mkDerivation rec {
-  name = "xsecurelock-${version}";
-  version = "1.1";
+  pname = "xsecurelock";
+  version = "1.7.0";
 
   src = fetchFromGitHub {
     owner = "google";
     repo = "xsecurelock";
     rev = "v${version}";
-    sha256 = "0yqp5xhkl9jpjyrmrxbyp7azwxmqc3lxv5lxrjqjaapl3q3096g5";
+    sha256 = "020y2mi4sshc5dghcz37aj5wwizbg6712rzq2a72f8z8m7mnxr5y";
   };
 
-  nativeBuildInputs = [ autoreconfHook pkgconfig ];
+  nativeBuildInputs = [
+    autoreconfHook pkgconfig
+  ];
   buildInputs = [
-    libX11 libXcomposite libXft libXmu pam
-    apacheHttpd imagemagick pamtester
+    libX11 libXcomposite libXft libXmu libXrandr libXext libXScrnSaver
+    pam apacheHttpd imagemagick pamtester
   ];
 
   configureFlags = [
@@ -24,9 +26,10 @@ stdenv.mkDerivation rec {
     "--with-xscreensaver=${xscreensaver}/libexec/xscreensaver"
   ];
 
-  preInstall = ''
-    substituteInPlace helpers/saver_blank \
-      --replace 'protect xset' 'protect ${xset}/bin/xset'
+  preConfigure = ''
+    cat > version.c <<'EOF'
+      const char *const git_version = "${version}";
+    EOF
   '';
 
   meta = with lib; {

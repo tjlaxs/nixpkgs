@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, nss, python
+{ stdenv, fetchurl, nss, python3
 , blacklist ? []
 , includeEmail ? false
 }:
@@ -15,14 +15,14 @@ let
 
 in
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   name = "nss-cacert-${nss.version}";
 
   src = nss.src;
 
   outputs = [ "out" "unbundled" ];
 
-  nativeBuildInputs = [ python ];
+  nativeBuildInputs = [ python3 ];
 
   configurePhase = ''
     ln -s nss/lib/ckfw/builtins/certdata.txt
@@ -64,6 +64,6 @@ stdenv.mkDerivation rec {
     homepage = https://curl.haxx.se/docs/caextract.html;
     description = "A bundle of X.509 certificates of public Certificate Authorities (CA)";
     platforms = platforms.all;
-    maintainers = with maintainers; [ wkennington fpletz ];
+    maintainers = with maintainers; [ fpletz ];
   };
 }

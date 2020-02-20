@@ -7,12 +7,12 @@
 }:
 
 buildPythonPackage rec {
-  version = "3.9.0";
+  version = "4.0.4";
   pname = "icalendar";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "93d0b94eab23d08f62962542309916a9681f16de3d5eca1c75497f30f1b07792";
+    sha256 = "16gjvqv0n05jrb9g228pdjgzd3amz2pdhvcgsn1jypszjg5m2w9l";
   };
 
   buildInputs = [ setuptools ];
@@ -20,7 +20,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "A parser/generator of iCalendar files";
-    homepage = "http://icalendar.readthedocs.org/";
+    homepage = "https://icalendar.readthedocs.org/";
     license = licenses.bsd2;
     maintainers = with maintainers; [ olcai ];
   };

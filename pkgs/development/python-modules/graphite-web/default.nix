@@ -1,18 +1,18 @@
 { stdenv, buildPythonPackage, fetchPypi, isPy3k, which
 , django, django_tagging, whisper, pycairo, cairocffi, ldap, memcached, pytz, urllib3, scandir
 }:
-if django.version != "1.8.18"
+if django.version != "1.8.19"
 || django_tagging.version != "0.4.3"
 then throw "graphite-web should be build with django_1_8 and django_tagging_0_4_3"
 else buildPythonPackage rec {
   pname = "graphite-web";
-  version = "1.1.4";
+  version = "1.1.6";
 
   disabled = isPy3k;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "4430929f954998d77aa0a61246c62d64a00a2f9464320f9a462294dd3448e522";
+    sha256 = "f4c293008ad588456397cd125cdad7f47f4bab5b6dd82b5fb69f5467e7346a2a";
   };
 
   propagatedBuildInputs = [
@@ -48,7 +48,7 @@ else buildPythonPackage rec {
   meta = with stdenv.lib; {
     homepage = http://graphite.wikidot.com/;
     description = "Enterprise scalable realtime graphing";
-    maintainers = with maintainers; [ rickynils offline basvandijk ];
+    maintainers = with maintainers; [ offline basvandijk ];
     license = licenses.asl20;
   };
 }

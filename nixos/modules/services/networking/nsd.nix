@@ -244,7 +244,7 @@ let
       };
 
       data = mkOption {
-        type = types.str;
+        type = types.lines;
         default = "";
         example = "";
         description = ''
@@ -435,7 +435,9 @@ let
 
   dnssecZones = (filterAttrs (n: v: if v ? dnssec then v.dnssec else false) zoneConfigs);
 
-  dnssec = length (attrNames dnssecZones) != 0; 
+  dnssec = dnssecZones != {};
+
+  dnssecTools = pkgs.bind.override { enablePython = true; };
 
   signZones = optionalString dnssec ''
     mkdir -p ${stateDir}/dnssec
@@ -445,8 +447,8 @@ let
     ${concatStrings (mapAttrsToList signZone dnssecZones)}
   '';
   signZone = name: zone: ''
-    ${pkgs.bind}/bin/dnssec-keymgr -g ${pkgs.bind}/bin/dnssec-keygen -s ${pkgs.bind}/bin/dnssec-settime -K ${stateDir}/dnssec -c ${policyFile name zone.dnssecPolicy} ${name}
-    ${pkgs.bind}/bin/dnssec-signzone -S -K ${stateDir}/dnssec -o ${name} -O full -N date ${stateDir}/zones/${name}
+    ${dnssecTools}/bin/dnssec-keymgr -g ${dnssecTools}/bin/dnssec-keygen -s ${dnssecTools}/bin/dnssec-settime -K ${stateDir}/dnssec -c ${policyFile name zone.dnssecPolicy} ${name}
+    ${dnssecTools}/bin/dnssec-signzone -S -K ${stateDir}/dnssec -o ${name} -O full -N date ${stateDir}/zones/${name}
     ${nsdPkg}/sbin/nsd-checkzone ${name} ${stateDir}/zones/${name}.signed && mv -v ${stateDir}/zones/${name}.signed ${stateDir}/zones/${name}
   '';
   policyFile = name: policy: pkgs.writeText "${name}.policy" ''
@@ -482,7 +484,7 @@ in
     };
 
     extraConfig = mkOption {
-      type = types.str;
+      type = types.lines;
       default = "";
       description = ''
         Extra nsd config.
@@ -897,13 +899,9 @@ in
 
     environment.systemPackages = [ nsdPkg ];
 
-    users.groups = singleton {
-      name = username;
-      gid = config.ids.gids.nsd;
-    };
+    users.groups.${username}.gid = config.ids.gids.nsd;
 
-    users.users = singleton {
-      name = username;
+    users.users.${username} = {
       description = "NSD service user";
       home = stateDir;
       createHome  = true;
@@ -914,9 +912,8 @@ in
     systemd.services.nsd = {
       description = "NSD authoritative only domain name service";
 
-      after = [ "keys.target" "network.target" ];
+      after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      wants = [ "keys.target" ];
 
       serviceConfig = {
         ExecStart = "${nsdPkg}/sbin/nsd -d -c ${nsdEnv}/nsd.conf";
@@ -953,11 +950,7 @@ in
       '';
     };
 
-    nixpkgs.config = mkIf dnssec {
-      bind.enablePython = true;
-    };
-
-    systemd.timers."nsd-dnssec" = mkIf dnssec {
+    systemd.timers.nsd-dnssec = mkIf dnssec {
       description = "Automatic DNSSEC key rollover";
 
       wantedBy = [ "nsd.service" ];
@@ -968,7 +961,7 @@ in
       };
     };
 
-    systemd.services."nsd-dnssec" = mkIf dnssec {
+    systemd.services.nsd-dnssec = mkIf dnssec {
       description = "DNSSEC key rollover";
 
       wantedBy = [ "nsd.service" ];

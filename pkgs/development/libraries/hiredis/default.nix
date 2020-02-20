@@ -1,7 +1,7 @@
 { stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
-  name = "hiredis-${version}";
+  pname = "hiredis";
   version = "0.14.0";
 
   src = fetchFromGitHub {
@@ -18,6 +18,5 @@ stdenv.mkDerivation rec {
     description = "Minimalistic C client for Redis >= 1.2";
     license = licenses.bsd3;
     platforms = platforms.all;
-    maintainers = with maintainers; [ wkennington ];
   };
 }

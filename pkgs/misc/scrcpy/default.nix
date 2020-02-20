@@ -2,28 +2,39 @@
 , meson
 , ninja
 , pkgconfig
+, fetchpatch
 
-, platformTools
+, platform-tools
 , ffmpeg
 , SDL2
 }:
 
 let
-  version = "1.3";
+  version = "1.12.1";
   prebuilt_server = fetchurl {
-    url = "https://github.com/Genymobile/scrcpy/releases/download/v${version}/scrcpy-server-v${version}.jar";
-    sha256 = "1ha04wfmghblwr9ajfl96cswacfgrk0b7klq2ixfvw1kgwhmm6hg";
+    url = "https://github.com/Genymobile/scrcpy/releases/download/v${version}/scrcpy-server-v${version}";
+    sha256 = "1sk6hbbnf4g6q58fspwlh8bn16j73j3i8hlcshqxzhfhl746krb3";
   };
 in
 stdenv.mkDerivation rec {
-  name = "scrcpy-${version}";
+  pname = "scrcpy";
   inherit version;
+
   src = fetchFromGitHub {
     owner = "Genymobile";
-    repo = "scrcpy";
+    repo = pname;
     rev = "v${version}";
-    sha256 = "02szi8w3w0lacyz42hlayxififi863qpm63yg9qir3jcl2vs7vdk";
+    sha256 = "16zi0d2jjm2nlrwkwvsxzfpgy45ami45wfh67wq7na2h2ywfmgcp";
   };
+
+  # postPatch:
+  #   screen.c: When run without a hardware accelerator, this allows the command to continue working rather than failing unexpectedly.
+  #   This can happen when running on non-NixOS because then scrcpy seems to have a hard time using the host OpenGL-supporting hardware.
+  #   It would be better to fix the OpenGL problem, but that seems much more intrusive.
+  postPatch = ''
+    substituteInPlace app/src/screen.c \
+      --replace "SDL_RENDERER_ACCELERATED" "SDL_RENDERER_ACCELERATED || SDL_RENDERER_SOFTWARE"
+  '';
 
   nativeBuildInputs = [ makeWrapper meson ninja pkgconfig ];
 
@@ -34,12 +45,13 @@ stdenv.mkDerivation rec {
     echo -n > server/meson.build
   '';
 
+  mesonFlags = [ "-Doverride_server_path=${prebuilt_server}" ];
   postInstall = ''
     mkdir -p "$out/share/scrcpy"
-    ln -s "${prebuilt_server}" "$out/share/scrcpy/scrcpy-server.jar"
+    ln -s "${prebuilt_server}" "$out/share/scrcpy/scrcpy-server"
 
     # runtime dep on `adb` to push the server
-    wrapProgram "$out/bin/scrcpy" --prefix PATH : "${platformTools}/bin"
+    wrapProgram "$out/bin/scrcpy" --prefix PATH : "${platform-tools}/bin"
   '';
 
   meta = with stdenv.lib; {

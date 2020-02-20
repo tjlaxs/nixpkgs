@@ -34,8 +34,8 @@ import ./make-test.nix ({ pkgs, ... }: {
 
       # To test the pullImage tool
       $docker->succeed("docker load --input='${pkgs.dockerTools.examples.nixFromDockerHub}'");
-      $docker->succeed("docker run --rm nixos/nix:1.11 nix-store --version");
-      $docker->succeed("docker rmi nixos/nix:1.11");
+      $docker->succeed("docker run --rm nix:2.2.1 nix-store --version");
+      $docker->succeed("docker rmi nix:2.2.1");
 
       # To test runAsRoot and entry point
       $docker->succeed("docker load --input='${pkgs.dockerTools.examples.nginx}'");
@@ -62,5 +62,32 @@ import ./make-test.nix ({ pkgs, ... }: {
       # Ensure Layered Docker images work
       $docker->succeed("docker load --input='${pkgs.dockerTools.examples.layered-image}'");
       $docker->succeed("docker run --rm ${pkgs.dockerTools.examples.layered-image.imageName}");
+      $docker->succeed("docker run --rm ${pkgs.dockerTools.examples.layered-image.imageName} cat extraCommands");
+
+      # Ensure building an image on top of a layered Docker images work
+      $docker->succeed("docker load --input='${pkgs.dockerTools.examples.layered-on-top}'");
+      $docker->succeed("docker run --rm ${pkgs.dockerTools.examples.layered-on-top.imageName}");
+
+      # Ensure layers are shared between images
+      $docker->succeed("docker load --input='${pkgs.dockerTools.examples.another-layered-image}'");
+      $docker->succeed("docker inspect ${pkgs.dockerTools.examples.layered-image.imageName} | ${pkgs.jq}/bin/jq -r '.[] | .RootFS.Layers | .[]' | sort > layers1.sha256");
+      $docker->succeed("docker inspect ${pkgs.dockerTools.examples.another-layered-image.imageName} | ${pkgs.jq}/bin/jq -r '.[] | .RootFS.Layers | .[]' | sort > layers2.sha256");
+      $docker->succeed('[ $(comm -1 -2 layers1.sha256 layers2.sha256 | wc -l) -ne 0 ]');
+
+      # Ensure order of layers is correct
+      $docker->succeed("docker load --input='${pkgs.dockerTools.examples.layersOrder}'");
+      $docker->succeed("docker run --rm  ${pkgs.dockerTools.examples.layersOrder.imageName} cat /tmp/layer1 | grep -q layer1");
+      # This is to be sure the order of layers of the parent image is preserved
+      $docker->succeed("docker run --rm  ${pkgs.dockerTools.examples.layersOrder.imageName} cat /tmp/layer2 | grep -q layer2");
+      $docker->succeed("docker run --rm  ${pkgs.dockerTools.examples.layersOrder.imageName} cat /tmp/layer3 | grep -q layer3");
+
+      # Ensure image with only 2 layers can be loaded
+      $docker->succeed("docker load --input='${pkgs.dockerTools.examples.two-layered-image}'");
+
+      # Ensure the bulk layer didn't miss store paths
+      # Regression test for https://github.com/NixOS/nixpkgs/issues/78744
+      $docker->succeed("docker load --input='${pkgs.dockerTools.examples.bulk-layer}'");
+      # This ensure the two output paths (ls and hello) are in the layer
+      $docker->succeed("docker run bulk-layer ls /bin/hello");
     '';
 })

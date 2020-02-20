@@ -1,25 +1,19 @@
-{ stdenv, fetchzip, ocaml, findlib, dune, yojson }:
+{ lib, fetchurl, buildDunePackage, yojson }:
 
-assert stdenv.lib.versionAtLeast ocaml.version "4.02";
+buildDunePackage rec {
+  pname = "merlin";
+  version = "3.3.3";
 
-let
-  version = "3.2.1";
-in
+  minimumOCamlVersion = "4.02.1";
 
-stdenv.mkDerivation {
-
-  name = "merlin-${version}";
-
-  src = fetchzip {
-    url = "https://github.com/ocaml/merlin/archive/v${version}.tar.gz";
-    sha256 = "1szv2b7d12ll5n6pvnhlv3a6vnlyrkpya4l9fiyyiwyvgd4xzxwf";
+  src = fetchurl {
+    url = "https://github.com/ocaml/merlin/releases/download/v${version}/merlin-v${version}.tbz";
+    sha256 = "05dfkbpbb7nvs4g6y0iw7a9f73ygvhs9l45l2g56y7zagvs9x43j";
   };
 
-  buildInputs = [ ocaml findlib dune yojson ];
+  buildInputs = [ yojson ];
 
-  inherit (dune) installPhase;
-
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "An editor-independent tool to ease the development of programs in OCaml";
     homepage = "https://github.com/ocaml/merlin";
     license = licenses.mit;

@@ -1,22 +1,35 @@
 { stdenv, fetchurl, pkgconfig, gnutls, liburcu, lmdb, libcap_ng, libidn2, libunistring
 , systemd, nettle, libedit, zlib, libiconv, libintl
+, autoreconfHook
 }:
 
 let inherit (stdenv.lib) optional optionals; in
 
 # Note: ATM only the libraries have been tested in nixpkgs.
 stdenv.mkDerivation rec {
-  name = "knot-dns-${version}";
-  version = "2.7.3";
+  pname = "knot-dns";
+  version = "2.9.2";
 
   src = fetchurl {
     url = "https://secure.nic.cz/files/knot-dns/knot-${version}.tar.xz";
-    sha256 = "8717c0f34e441e96bc32bc93b48333ea9c094c5075f91575e40ac30fcf6692df";
+    sha256 = "298cdf33aa7589b50df7e5833694b24cd2de8b6d17cee7e1673873fe576db6ee";
   };
 
   outputs = [ "bin" "out" "dev" ];
 
-  nativeBuildInputs = [ pkgconfig ];
+  configureFlags = [
+    "--with-configdir=/etc/knot"
+    "--with-rundir=/run/knot"
+    "--with-storage=/var/lib/knot"
+  ];
+
+  patches = [
+    # Don't try to create directories like /var/lib/knot at build time.
+    # They are later created from NixOS itself.
+    ./dont-create-run-time-dirs.patch
+  ];
+
+  nativeBuildInputs = [ pkgconfig autoreconfHook ];
   buildInputs = [
     gnutls liburcu libidn2 libunistring
     nettle libedit
@@ -33,7 +46,9 @@ stdenv.mkDerivation rec {
   doCheck = true;
   doInstallCheck = false; # needs pykeymgr?
 
-  postInstall = ''rm -r "$out"/var "$out"/lib/*.la'';
+  postInstall = ''
+    rm -r "$out"/lib/*.la
+  '';
 
   meta = with stdenv.lib; {
     description = "Authoritative-only DNS server from .cz domain registry";

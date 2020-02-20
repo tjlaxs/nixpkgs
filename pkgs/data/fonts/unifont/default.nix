@@ -1,36 +1,47 @@
-{ stdenv, fetchurl, mkfontscale, mkfontdir }:
+{ stdenv, fetchurl, mkfontscale
+, libfaketime, fonttosfnt
+}:
 
 stdenv.mkDerivation rec {
-  name = "unifont-${version}";
-  version = "11.0.02";
+  pname = "unifont";
+  version = "12.1.03";
 
   ttf = fetchurl {
-    url = "mirror://gnu/unifont/${name}/${name}.ttf";
-    sha256 = "0l8p07m566131xdinv1pcfc578jpvn72n6dhqmgivp8myai2xkzx";
+    url = "mirror://gnu/unifont/${pname}-${version}/${pname}-${version}.ttf";
+    sha256 = "10igjlf05d97h3vcggr2ahxmq9ljby4ypja2g4s9bvxs2w1si51p";
   };
 
   pcf = fetchurl {
-    url = "mirror://gnu/unifont/${name}/${name}.pcf.gz";
-    sha256 = "1hcl71fjchngcb2b4mwl4hhx886faaniv86x2xgk8850766qpnmy";
+    url = "mirror://gnu/unifont/${pname}-${version}/${pname}-${version}.pcf.gz";
+    sha256 = "1cd1fnk3m7giqp099kynnjj4m7q00lqm4ybqb1vzd2wi3j4a1awf";
   };
 
-  nativeBuildInputs = [ mkfontscale mkfontdir ];
+  nativeBuildInputs = [ libfaketime fonttosfnt mkfontscale ];
 
-  phases = "installPhase";
+  phases = [ "buildPhase" "installPhase" ];
+
+  buildPhase =
+    ''
+      # convert pcf font to otb
+      faketime -f "1970-01-01 00:00:01" \
+      fonttosfnt -g 2 -m 2 -v -o "unifont.otb" "${pcf}"
+    '';
 
   installPhase =
     ''
-      mkdir -p $out/share/fonts $out/share/fonts/truetype
-      cp -v ${pcf} $out/share/fonts/unifont.pcf.gz
-      cp -v ${ttf} $out/share/fonts/truetype/unifont.ttf
-      cd $out/share/fonts
+      # install otb fonts
+      install -m 644 -D unifont.otb "$otb/share/fonts/unifont.otb"
+      mkfontdir "$otb/share/fonts"
+
+      # install pcf and ttf fonts
+      install -m 644 -D ${pcf} $out/share/fonts/unifont.pcf.gz
+      install -m 644 -D ${ttf} $out/share/fonts/truetype/unifont.ttf
+      cd "$out/share/fonts"
       mkfontdir
       mkfontscale
     '';
 
-  outputHashAlgo = "sha256";
-  outputHashMode = "recursive";
-  outputHash = "16ni07cfw38s7cj8bdsfi7fa1qahm3k90cmm4gn40qvz35i17x15";
+  outputs = [ "out" "otb" ];
 
   meta = with stdenv.lib; {
     description = "Unicode font for Base Multilingual Plane";

@@ -1,23 +1,28 @@
 { stdenv, fetchurl, pkgconfig, gnome3, gtk3, wrapGAppsHook
-, librsvg, libcanberra-gtk3, intltool, itstool, libxml2 }:
+, librsvg, gsound, gettext, itstool, libxml2
+, meson, ninja, vala, python3, desktop-file-utils
+}:
 
 stdenv.mkDerivation rec {
-  name = "gnome-taquin-${version}";
-  version = "3.28.0";
+  pname = "gnome-taquin";
+  version = "3.34.4";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/gnome-taquin/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "096a32nhcz243na56iq2wxixd4f3lbj33a5h718r3j6yppqazjx9";
+    url = "mirror://gnome/sources/gnome-taquin/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "0s8gsgaj1mxldg5yaq6k9anfha9bc4n16wms66kbbpqi8k5hcm40";
   };
 
   passthru = {
     updateScript = gnome3.updateScript { packageName = "gnome-taquin"; attrPath = "gnome3.gnome-taquin"; };
   };
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [
+    pkgconfig wrapGAppsHook meson ninja python3
+    gettext itstool libxml2 vala desktop-file-utils
+  ];
   buildInputs = [
-    gtk3 wrapGAppsHook librsvg libcanberra-gtk3
-    intltool itstool libxml2 gnome3.defaultIconTheme
+    gtk3 librsvg gsound
+    gnome3.adwaita-icon-theme
   ];
 
   meta = with stdenv.lib; {

@@ -4,14 +4,13 @@
 
 buildPythonPackage rec {
   pname = "geopandas";
-  version = "0.4.0";
-  name = pname + "-" + version;
+  version = "0.6.3";
 
   src = fetchFromGitHub {
     owner = "geopandas";
     repo = "geopandas";
     rev = "v${version}";
-    sha256 = "025zpgck5pnmidvzk0805pr345rd7k6z66qb2m34gjh1814xjkhv";
+    sha256 = "11mzb5spwa06h1zhn7z905wcwya2x5srghv82jp5zjka9zdhsycd";
   };
 
   checkInputs = [ pytest Rtree ];
@@ -30,7 +29,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Python geospatial data analysis framework";
-    homepage = https://geopandas.org;
+    homepage = "http://geopandas.org";
     license = licenses.bsd3;
     maintainers = with maintainers; [ knedlsepp ];
   };

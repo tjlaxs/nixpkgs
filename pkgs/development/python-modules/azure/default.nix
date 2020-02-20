@@ -5,18 +5,17 @@
 , futures
 , pyopenssl
 , requests
-, pythonOlder
 , isPy3k
 }:
 
 buildPythonPackage rec {
-  version = "0.11.0";
+  version = "4.0.0";
   pname = "azure";
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "89c20b2efaaed3c6f56345d55c32a8d4e7d2a16c032d0acb92f8f490c508fe24";
+    sha256 = "7d6afa332fccffe1a9390bcfac5122317eec657c6029f144d794603a81cd0e50";
   };
 
   propagatedBuildInputs = [ dateutil pyopenssl requests ]
@@ -35,5 +34,6 @@ buildPythonPackage rec {
     homepage = "https://azure.microsoft.com/en-us/develop/python/";
     license = licenses.asl20;
     maintainers = with maintainers; [ olcai ];
+    broken = true; # this should propagate over 70 azure packages, many of which are not added yet
   };
 }

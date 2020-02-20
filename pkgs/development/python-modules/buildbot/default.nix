@@ -1,8 +1,9 @@
-{ stdenv, lib, buildPythonPackage, fetchPypi, makeWrapper, isPy3k,
+{ stdenv, lib, buildPythonPackage, fetchPypi, fetchpatch, makeWrapper, isPy3k,
   python, twisted, jinja2, zope_interface, future, sqlalchemy,
-  sqlalchemy_migrate, dateutil, txaio, autobahn, pyjwt, treq, txrequests,
-  txgithub, pyjade, boto3, moto, mock, lz4, setuptoolsTrial, isort, pylint,
-  flake8, buildbot-worker, buildbot-pkg, glibcLocales }:
+  sqlalchemy_migrate, dateutil, txaio, autobahn, pyjwt, pyyaml, treq,
+  txrequests, pyjade, boto3, moto, mock, python-lz4, setuptoolsTrial,
+  isort, pylint, flake8, buildbot-worker, buildbot-pkg, buildbot-plugins,
+  parameterized, git, openssh, glibcLocales }:
 
 let
   withPlugins = plugins: buildPythonPackage {
@@ -24,11 +25,11 @@ let
 
   package = buildPythonPackage rec {
     pname = "buildbot";
-    version = "1.4.0";
+    version = "2.6.0";
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "0dfa926nh642i3bnpzlz0q347zicyx6wswjfqbniri59ya64fncx";
+      sha256 = "1l3ajhy68jddbgbizaa5hq65lgqkll6389hss4p2j36cbxbn7hiv";
     };
 
     propagatedBuildInputs = [
@@ -36,17 +37,16 @@ let
       twisted
       jinja2
       zope_interface
-      future
       sqlalchemy
       sqlalchemy_migrate
       dateutil
       txaio
       autobahn
       pyjwt
-
+      pyyaml
+    ]
       # tls
-      twisted.extras.tls
-    ];
+      ++ twisted.extras.tls;
 
     checkInputs = [
       treq
@@ -55,13 +55,17 @@ let
       boto3
       moto
       mock
-      lz4
+      python-lz4
       setuptoolsTrial
       isort
       pylint
       flake8
       buildbot-worker
       buildbot-pkg
+      buildbot-plugins.www
+      parameterized
+      git
+      openssh
       glibcLocales
     ];
 
@@ -71,23 +75,28 @@ let
       ./skip_test_linux_distro.patch
     ];
 
-    LC_ALL = "en_US.UTF-8";
+    postPatch = ''
+      substituteInPlace buildbot/scripts/logwatcher.py --replace '/usr/bin/tail' "$(type -P tail)"
+    '';
 
     # TimeoutErrors on slow machines -> aarch64
     doCheck = !stdenv.isAarch64;
 
-    postPatch = ''
-      substituteInPlace buildbot/scripts/logwatcher.py --replace '/usr/bin/tail' "$(type -P tail)"
+    preCheck = ''
+      export LC_ALL="en_US.UTF-8"
+      export PATH="$out/bin:$PATH"
     '';
+
+    disabled = !isPy3k;
 
     passthru = {
       inherit withPlugins;
     };
 
     meta = with lib; {
-      homepage = http://buildbot.net/;
+      homepage = "https://buildbot.net/";
       description = "Buildbot is an open-source continuous integration framework for automating software build, test, and release processes";
-      maintainers = with maintainers; [ nand0p ryansydnor ];
+      maintainers = with maintainers; [ nand0p ryansydnor lopsided98 ];
       license = licenses.gpl2;
     };
   };

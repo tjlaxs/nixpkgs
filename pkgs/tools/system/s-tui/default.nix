@@ -1,13 +1,12 @@
 { stdenv, pythonPackages }:
 
 pythonPackages.buildPythonPackage rec {
-  name = "${pname}-${version}";
   pname = "s-tui";
-  version = "0.8.2";
+  version = "1.0.0";
 
   src = pythonPackages.fetchPypi {
     inherit pname version;
-    sha256 = "18bn0bpnrljx11gj95m2x5hlsnb8jkivlm6b1xx035ldgj1svgzh";
+    sha256 = "0r5yhlsi5xiy7ii1w4kqkaxz9069v5bbfwi3x3xnxhk51yjfgr8n";
   };
 
   propagatedBuildInputs = with pythonPackages; [

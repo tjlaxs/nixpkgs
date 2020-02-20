@@ -1,12 +1,12 @@
 {stdenv, fetchurl}:
 
 stdenv.mkDerivation rec {
-  name = "liblinear-${version}";
-  version = "2.21";
+  pname = "liblinear";
+  version = "2.30";
 
   src = fetchurl {
     url = "https://www.csie.ntu.edu.tw/~cjlin/liblinear/liblinear-${version}.tar.gz";
-    sha256 = "0jp0z3s32czf748i6dnlabs1psqx1dcn9w96c56m24xq5l789chs";
+    sha256 = "1b66jpg9fdwsq7r52fccr8z7nqcivrin5d8zg2f134ygqqwp0748";
   };
 
   buildPhase = ''
@@ -18,15 +18,17 @@ stdenv.mkDerivation rec {
     libSuff = stdenv.hostPlatform.extensions.sharedLibrary;
   in ''
     mkdir -p $out/lib $out/bin $out/include
-    cp liblinear.so.3 $out/lib/liblinear.3${libSuff}
-    ln -s $out/lib/liblinear.3${libSuff} $out/lib/liblinear${libSuff}
+    ${if stdenv.isDarwin then ''
+      cp liblinear.so.3 $out/lib/liblinear.3.dylib
+      ln -s $out/lib/liblinear.3.dylib $out/lib/liblinear.dylib
+      install_name_tool -id liblinear.3.dylib $out/lib/liblinear.3.dylib
+    '' else ''
+      cp liblinear.so.3 $out/lib/liblinear.so.3
+      ln -s $out/lib/liblinear.so.3 $out/lib/liblinear.so
+    ''}
     cp train $out/bin/liblinear-train
     cp predict $out/bin/liblinear-predict
     cp linear.h $out/include
-  '';
-
-  postFixup = stdenv.lib.optionalString stdenv.isDarwin ''
-    install_name_tool -id liblinear.3.dylib $out/lib/liblinear.3.dylib
   '';
 
   meta = with stdenv.lib; {

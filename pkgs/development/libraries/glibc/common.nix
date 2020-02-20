@@ -19,32 +19,33 @@
 
 { stdenv, lib
 , buildPackages
-, fetchurl ? null
+, fetchurl
 , linuxHeaders ? null
 , gd ? null, libpng ? null
+, libidn2
 , bison
+, python3Minimal
 }:
 
 { name
 , withLinuxHeaders ? false
 , profilingLibraries ? false
-, installLocales ? false
 , withGd ? false
 , meta
 , ...
 } @ args:
 
 let
-  version = "2.27";
+  version = "2.30";
   patchSuffix = "";
-  sha256 = "0wpwq7gsm7sd6ysidv0z575ckqdg13cr2njyfgrbgh4f65adwwji";
+  sha256 = "1bxqpg91d02qnaz837a5kamm0f43pr1il4r9pknygywsar713i72";
 in
 
 assert withLinuxHeaders -> linuxHeaders != null;
 assert withGd -> gd != null && libpng != null;
 
 stdenv.mkDerivation ({
-  inherit version installLocales;
+  inherit version;
   linuxHeaders = if withLinuxHeaders then linuxHeaders else null;
 
   inherit (stdenv) is64bit;
@@ -88,9 +89,18 @@ stdenv.mkDerivation ({
         less linux-*?/arch/x86/kernel/syscall_table_32.S
        */
       ./allow-kernel-2.6.32.patch
+      /* Provide utf-8 locales by default, so we can use it in stdenv without depending on our large locale-archive. */
+      (fetchurl {
+        url = "https://salsa.debian.org/glibc-team/glibc/raw/49767c9f7de4828220b691b29de0baf60d8a54ec/debian/patches/localedata/locale-C.diff";
+        sha256 = "0irj60hs2i91ilwg5w7sqrxb695c93xg0ik7yhhq9irprd7fidn4";
+      })
     ]
-    ++ lib.optional stdenv.isx86_64 ./fix-x64-abi.patch
-    ++ lib.optional stdenv.hostPlatform.isMusl ./fix-rpc-types-musl-conflicts.patch;
+    ++ lib.optionals stdenv.isx86_64 [
+      ./fix-x64-abi.patch
+      ./2.27-CVE-2019-19126.patch
+    ]
+    ++ lib.optional stdenv.hostPlatform.isMusl ./fix-rpc-types-musl-conflicts.patch
+    ++ lib.optional stdenv.buildPlatform.isDarwin ./darwin-cross-build.patch;
 
   postPatch =
     ''
@@ -101,6 +111,19 @@ stdenv.mkDerivation ({
       # nscd needs libgcc, and we don't want it dynamically linked
       # because we don't want it to depend on bootstrap-tools libs.
       echo "LDFLAGS-nscd += -static-libgcc" >> nscd/Makefile
+    ''
+    # FIXME: find a solution for infinite recursion in cross builds.
+    # For now it's hopefully acceptable that IDN from libc doesn't reliably work.
+    + lib.optionalString (stdenv.hostPlatform == stdenv.buildPlatform) ''
+
+      # Ensure that libidn2 is found.
+      patch -p 1 <<EOF
+      --- a/inet/idna.c
+      +++ b/inet/idna.c
+      @@ -25,1 +25,1 @@
+      -#define LIBIDN2_SONAME "libidn2.so.0"
+      +#define LIBIDN2_SONAME "${lib.getLib libidn2}/lib/libidn2.so.0"
+      EOF
     '';
 
   configureFlags =
@@ -132,8 +155,8 @@ stdenv.mkDerivation ({
   outputs = [ "out" "bin" "dev" "static" ];
 
   depsBuildBuild = [ buildPackages.stdenv.cc ];
-  nativeBuildInputs = [ bison ];
-  buildInputs = lib.optionals withGd [ gd libpng ];
+  nativeBuildInputs = [ bison python3Minimal ];
+  buildInputs = [ linuxHeaders ] ++ lib.optionals withGd [ gd libpng ];
 
   # Needed to install share/zoneinfo/zone.tab.  Set to impure /bin/sh to
   # prevent a retained dependency on the bootstrap tools in the stdenv-linux
@@ -187,7 +210,7 @@ stdenv.mkDerivation ({
   doCheck = false; # fails
 
   meta = {
-    homepage = http://www.gnu.org/software/libc/;
+    homepage = https://www.gnu.org/software/libc/;
     description = "The GNU C Library";
 
     longDescription =
@@ -208,10 +231,6 @@ stdenv.mkDerivation ({
 
 // lib.optionalAttrs (stdenv.hostPlatform != stdenv.buildPlatform) {
   preInstall = null; # clobber the native hook
-
-  dontStrip = true;
-
-  separateDebugInfo = false; # this is currently broken for crossDrv
 
   # To avoid a dependency on the build system 'bash'.
   preFixup = ''

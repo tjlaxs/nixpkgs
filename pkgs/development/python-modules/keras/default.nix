@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "Keras";
-  version = "2.2.4";
+  version = "2.3.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "90b610a3dbbf6d257b20a079eba3fdf2eed2158f64066a7c6f7227023fd60bc9";
+    sha256 = "321d43772006a25a1d58eea17401ef2a34d388b588c9f7646c34796151ebc8cc";
   };
 
   checkInputs = [
@@ -24,14 +24,6 @@ buildPythonPackage rec {
     six pyyaml numpy scipy h5py
     keras-applications keras-preprocessing
   ];
-
-  # Keras 2.2.2 expects older versions of keras_applications
-  # and keras_preprocessing. These substitutions can be removed
-  # for for the next Keras release.
-  postPatch = ''
-    substituteInPlace setup.py --replace "keras_applications==1.0.4" "keras_applications==1.0.5"
-    substituteInPlace setup.py --replace "keras_preprocessing==1.0.2" "keras_preprocessing==1.0.3"
-  '';
 
   # Couldn't get tests working
   doCheck = false;

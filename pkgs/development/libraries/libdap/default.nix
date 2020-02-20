@@ -1,15 +1,15 @@
 { stdenv, fetchurl, bison, libuuid, curl, libxml2, flex }:
 
 stdenv.mkDerivation rec {
-  version = "3.20.0";
-  name = "libdap-${version}";
+  version = "3.20.5";
+  pname = "libdap";
 
   nativeBuildInputs = [ bison flex ];
   buildInputs = [ libuuid curl libxml2 ];
 
   src = fetchurl {
-    url = "https://www.opendap.org/pub/source/${name}.tar.gz";
-    sha256 = "0cr3d7dlzq583dqqrkbs1bkcrwag4hp7hwrx5c0mjk7q4vrslh92";
+    url = "https://www.opendap.org/pub/source/${pname}-${version}.tar.gz";
+    sha256 = "17j6ca2qsp69a91lm11mwbs4l8q13xqcdz60l94avl5krymrqg47";
   };
 
   meta = with stdenv.lib; {

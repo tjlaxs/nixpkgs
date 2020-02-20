@@ -6,16 +6,16 @@
 
 buildPythonPackage rec {
   pname = "sortedcollections";
-  version = "0.4.2";
+  version = "1.1.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "12dlzln9gyv8smsy2k6d6dmr0ywrpwyrr1cjy649ia5h1g7xdvwa";
+    sha256 = "12nkw69lnyvh9wy6rsd0ng4bcia81vkhj1rj1kj1k3vzppn0sgmr";
   };
 
-  buildInputs = [ sortedcontainers ];
+  propagatedBuildInputs = [ sortedcontainers ];
 
-  # wants to test all python versions with tox:
+  # No tests in PyPi tarball
   doCheck = false;
 
   meta = with stdenv.lib; {

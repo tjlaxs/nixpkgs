@@ -3,7 +3,7 @@
 stdenv.mkDerivation rec {
   rev = "9ae8768";
   version = "5.4";
-  name = "mail-notification-${version}";
+  pname = "mail-notification";
 
   src = fetchFromGitHub {
     inherit rev;
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
     ./patches/mail-notification-dont-link-against-bsd-compat.patch
   ];
 
-  patchFlags = "-p0";
+  patchFlags = [ "-p0" ];
   NIX_CFLAGS_COMPILE = "-Wno-error";
 
   preConfigure = "./jb configure prefix=$out";
@@ -46,7 +46,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Tray status icon, which notifies us when new email arrives";
-    homepage = http://www.nongnu.org/mailnotify/;
+    homepage = https://www.nongnu.org/mailnotify/;
     license = with licenses; [ gpl3 ];
     platforms = platforms.unix;
     maintainers = [ maintainers.eleanor ];

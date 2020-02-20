@@ -1,14 +1,14 @@
 { stdenv, substituteAll, fetchFromGitHub, glib, glib-networking, libgtop }:
 
 stdenv.mkDerivation rec {
-  name = "gnome-shell-system-monitor-${version}";
-  version = "33";
+  pname = "gnome-shell-system-monitor";
+  version = "38";
 
   src = fetchFromGitHub {
     owner = "paradoxxxzero";
     repo = "gnome-shell-system-monitor-applet";
     rev = "v${version}";
-    sha256 = "0abqaanl5r26x8f0mm0jgrjsr86hcx7mk75dx5c3zz7csw4nclkk";
+    sha256 = "1sdj2kxb418mgq44a6lf6jic33wlfbnn3ja61igmx0jj1530iknv";
   };
 
   buildInputs = [

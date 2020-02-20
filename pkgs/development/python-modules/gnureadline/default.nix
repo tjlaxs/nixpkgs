@@ -6,13 +6,13 @@
 }:
 
 buildPythonPackage rec {
-  version = "6.3.3";
+  version = "8.0.0";
   pname = "gnureadline";
   disabled = isPyPy;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1ghck2zz4xbqa3wz73brgjhrqj55p9hc1fq6c9zb09dnyhwb0nd2";
+    sha256 = "0xllr43dizvybmb68i0ybk1xhaqx5abjwxa9vrg43b9ds0pggvk1";
   };
 
   buildInputs = [ pkgs.ncurses ];
@@ -22,7 +22,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "The standard Python readline extension statically linked against the GNU readline library";
-    homepage = http://github.com/ludwigschwardt/python-gnureadline;
+    homepage = https://github.com/ludwigschwardt/python-gnureadline;
     license = licenses.gpl3;
   };
 

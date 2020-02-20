@@ -1,41 +1,44 @@
-{ stdenv, rustPlatform, fetchFromGitHub, cmake, pkgconfig, zlib
-, Security, libiconv
+{ stdenv, rustPlatform, fetchFromGitHub, llvmPackages, pkgconfig, less
+, Security, libiconv, installShellFiles, makeWrapper
 }:
 
 rustPlatform.buildRustPackage rec {
-  name    = "bat-${version}";
-  version = "0.8.0";
+  pname   = "bat";
+  version = "0.12.1";
 
   src = fetchFromGitHub {
     owner  = "sharkdp";
-    repo   = "bat";
+    repo   = pname;
     rev    = "v${version}";
-    sha256 = "1xvjw61q0qbnzj95g7g8xckcqha9jrf2172b5l7faj7i0jhmz2kx";
+    sha256 = "1cpa8dal4c27pnbmmrar4vqzcl4h0zf8x1zx1dlf0riavdg9n56y";
     fetchSubmodules = true;
   };
 
-  cargoSha256 = "0xv769f2iqrgnbmb7ma9p3gbb2xpx2lhqc0kq5nizf8w8xdc5m11";
+  cargoSha256 = "17xyb84axkn341nd5rm7jza1lrn8wcnl6jirhyv63r5k6mswy39i";
 
-  nativeBuildInputs = [ cmake pkgconfig zlib ];
+  nativeBuildInputs = [ pkgconfig llvmPackages.libclang installShellFiles makeWrapper ];
 
   buildInputs = stdenv.lib.optionals stdenv.isDarwin [ Security libiconv ];
 
-  postInstall = ''
-    install -m 444 -Dt $out/share/man/man1 doc/bat.1
+  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
 
-    install -Dm644 target/release/build/bat-*/out/_bat \
-      "$out/share/zsh/site-functions/_bat"
-    install -Dm644 target/release/build/bat-*/out/bat.bash \
-      "$out/share/bash-completions/completions/bat.bash"
-    install -Dm644 target/release/build/bat-*/out/bat.fish \
-      "$out/share/fish/vendor_completions.d/bat.fish"
+  postInstall = ''
+    installManPage doc/bat.1
+    installShellCompletion assets/completions/bat.fish
+  '';
+
+  # Insert Nix-built `less` into PATH because the system-provided one may be too old to behave as
+  # expected with certain flag combinations.
+  postFixup = ''
+    wrapProgram "$out/bin/bat" \
+      --prefix PATH : "${stdenv.lib.makeBinPath [ less ]}"
   '';
 
   meta = with stdenv.lib; {
     description = "A cat(1) clone with syntax highlighting and Git integration";
     homepage    = https://github.com/sharkdp/bat;
     license     = with licenses; [ asl20 /* or */ mit ];
-    maintainers = with maintainers; [ dywedir ];
-    platforms   = platforms.linux ++ platforms.darwin;
+    maintainers = with maintainers; [ dywedir lilyball ];
+    platforms   = platforms.all;
   };
 }

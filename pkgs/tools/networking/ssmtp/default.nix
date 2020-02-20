@@ -1,4 +1,4 @@
-{stdenv, fetchurl, tlsSupport ? false, openssl ? null}:
+{stdenv, fetchurl, tlsSupport ? true, openssl ? null}:
 
 assert tlsSupport -> openssl != null;
 
@@ -26,13 +26,17 @@ stdenv.mkDerivation {
       sed -e '/INSTALLED_CONFIGURATION_FILE/d' \
           -e 's|/lib/sendmail|$(TMPDIR)/sendmail|' \
           -i Makefile
+      substituteInPlace Makefile \
+        --replace '$(INSTALL) -s' '$(INSTALL) -s --strip-program $(STRIP)'
     '';
 
-  installFlags = "etcdir=$(out)/etc";
+  installFlags = [ "etcdir=$(out)/etc" ];
 
   installTargets = [ "install" "install-sendmail" ];
 
   buildInputs = stdenv.lib.optional tlsSupport openssl;
+
+  NIX_LDFLAGS = stdenv.lib.optionalString tlsSupport "-lcrypto";
 
   meta = with stdenv.lib; {
     platforms = platforms.linux;

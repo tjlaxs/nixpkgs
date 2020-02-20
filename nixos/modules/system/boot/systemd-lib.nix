@@ -9,12 +9,11 @@ in rec {
 
   shellEscape = s: (replaceChars [ "\\" ] [ "\\\\" ] s);
 
+  mkPathSafeName = lib.replaceChars ["@" ":" "\\" "[" "]"] ["-" "-" "-" "" ""];
+
   makeUnit = name: unit:
-    let
-      pathSafeName = lib.replaceChars ["@" ":" "\\" "[" "]"] ["-" "-" "-" "" ""] name;
-    in
     if unit.enable then
-      pkgs.runCommand "unit-${pathSafeName}"
+      pkgs.runCommand "unit-${mkPathSafeName name}"
         { preferLocalBuild = true;
           allowSubstitutes = false;
           inherit (unit) text;
@@ -24,7 +23,7 @@ in rec {
           echo -n "$text" > $out/${shellEscape name}
         ''
     else
-      pkgs.runCommand "unit-${pathSafeName}-disabled"
+      pkgs.runCommand "unit-${mkPathSafeName name}-disabled"
         { preferLocalBuild = true;
           allowSubstitutes = false;
         }
@@ -148,7 +147,13 @@ in rec {
       done
 
       # Symlink all units provided listed in systemd.packages.
-      for i in ${toString cfg.packages}; do
+      packages="${toString cfg.packages}"
+
+      # Filter duplicate directories
+      declare -A unique_packages
+      for k in $packages ; do unique_packages[$k]=1 ; done
+
+      for i in ''${!unique_packages[@]}; do
         for fn in $i/etc/systemd/${type}/* $i/lib/systemd/${type}/*; do
           if ! [[ "$fn" =~ .wants$ ]]; then
             if [[ -d "$fn" ]]; then

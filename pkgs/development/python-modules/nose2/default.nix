@@ -2,18 +2,23 @@
 , buildPythonPackage
 , fetchPypi
 , six
+, pythonOlder
+, mock
+, coverage
 }:
 
 buildPythonPackage rec {
   pname = "nose2";
-  version = "0.5.0";
+  version = "0.9.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0595rh6b6dncbj0jigsyrgrh6h8fsl6w1fr69h76mxv9nllv0rlr";
+    sha256 = "16drs4bc2wvgwwi1pf6pmk6c00pl16vs1v7djc4a8kwpsxpibphf";
   };
 
-  propagatedBuildInputs = [ six ];
+  propagatedBuildInputs = [ six coverage ]
+    ++ stdenv.lib.optionals (pythonOlder "3.4") [ mock ];
+
   # AttributeError: 'module' object has no attribute 'collector'
   doCheck = false;
 

@@ -1,15 +1,15 @@
 { stdenv, fetchurl, perl, dpkg }:
 
 stdenv.mkDerivation rec {
-  name = "bdf2psf-${version}";
-  version = "1.185";
+  pname = "bdf2psf";
+  version = "1.194";
 
   src = fetchurl {
     url = "mirror://debian/pool/main/c/console-setup/bdf2psf_${version}_all.deb";
-    sha256 = "0i8ppqj6yhdkvjkwfl588f2zpaybj61pq64bhlnmc8c4snwpn1z6";
+    sha256 = "10c0rbhqscizfa063m6mms31i0knh25bxr35s008b6mp5pxr33mc";
   };
 
-  buildInputs = [ dpkg ];
+  nativeBuildInputs = [ dpkg ];
 
   dontConfigure = true;
   dontBuild = true;
@@ -17,8 +17,7 @@ stdenv.mkDerivation rec {
   unpackPhase = "dpkg-deb -x $src .";
   installPhase = "
     substituteInPlace usr/bin/bdf2psf --replace /usr/bin/perl ${perl}/bin/perl
-    mv usr/bin .
-    cp -r . $out
+    mv usr $out
   ";
 
   meta = with stdenv.lib; {

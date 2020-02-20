@@ -1,12 +1,16 @@
-{ stdenv, fetchurl, python, cairomm, sparsehash, pycairo, autoreconfHook,
-pkgconfig, boost, expat, scipy, cgal, gmp, mpfr,
-gobjectIntrospection, pygobject3, gtk3, matplotlib, ncurses,
-buildPythonPackage }:
+{ stdenv, fetchurl, python, cairomm, sparsehash, pycairo, autoreconfHook
+, pkg-config, boost, expat, scipy, cgal, gmp, mpfr
+, gobject-introspection, pygobject3, gtk3, matplotlib, ncurses
+, buildPythonPackage
+, fetchpatch
+, pythonAtLeast
+, lib
+}:
 
 buildPythonPackage rec {
   pname = "graph-tool";
   format = "other";
-  version = "2.26";
+  version = "2.29";
 
   meta = with stdenv.lib; {
     description = "Python module for manipulation and statistical analysis of graphs";
@@ -17,7 +21,7 @@ buildPythonPackage rec {
 
   src = fetchurl {
     url = "https://downloads.skewed.de/graph-tool/graph-tool-${version}.tar.bz2";
-    sha256 = "0w7pd2h8ayr88kjl82c8fdshnk6f3xslc77gy7ma09zkbvf76qnz";
+    sha256 = "0ykzcnqc5bhqb4xlf9ahpp807vj5868xdrmcj6fggqnnpqv4633c";
   };
 
   configureFlags = [
@@ -28,7 +32,7 @@ buildPythonPackage rec {
     "--enable-openmp"
   ];
 
-  nativeBuildInputs = [ autoreconfHook pkgconfig ];
+  nativeBuildInputs = [ autoreconfHook pkg-config ];
   buildInputs = [ ncurses ];
 
   propagatedBuildInputs = [
@@ -43,7 +47,7 @@ buildPythonPackage rec {
     sparsehash
     # drawing
     cairomm
-    gobjectIntrospection
+    gobject-introspection
     gtk3
     pycairo
     matplotlib

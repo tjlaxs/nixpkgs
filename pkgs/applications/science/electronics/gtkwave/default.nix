@@ -1,18 +1,23 @@
-{stdenv, fetchurl, gtk2, gperf, pkgconfig, bzip2, tcl, tk, judy, xz}:
+{ stdenv, fetchurl, glib, gtk3, gperf, pkgconfig, bzip2, tcl, tk, wrapGAppsHook, judy, xz }:
 
 stdenv.mkDerivation rec {
-  name = "gtkwave-${version}";
-  version = "3.3.95";
+  pname = "gtkwave";
+  version = "3.3.103";
 
   src = fetchurl {
-    url    = "mirror://sourceforge/gtkwave/${name}.tar.gz";
-    sha256 = "1999wnipah1ncvjzjf95pfdrvgq1kd6hli8xlaj2hfjka8pamfaf";
+    url    = "mirror://sourceforge/gtkwave/${pname}-gtk3-${version}.tar.gz";
+    sha256 = "0djqfnxy772a9p44wnm5ansbih7jg76xv1hvcpkv3gblhkzg49ay";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ gtk2 gperf bzip2 tcl tk judy xz ];
+  nativeBuildInputs = [ pkgconfig wrapGAppsHook ];
+  buildInputs = [ glib gtk3 gperf bzip2 tcl tk judy xz ];
 
-  configureFlags = [ "--with-tcl=${tcl}/lib" "--with-tk=${tk}/lib" "--enable-judy" ];
+  configureFlags = [
+    "--with-tcl=${tcl}/lib"
+    "--with-tk=${tk}/lib"
+    "--enable-judy"
+    "--enable-gtk3"
+  ];
 
   meta = {
     description = "VCD/Waveform viewer for Unix and Win32";

@@ -1,6 +1,19 @@
-{ stdenv, pkgs, fetchurl, makeWrapper, wrapGAppsHook, gvfs, gtk3, atomEnv }:
+{ stdenv, pkgs, fetchurl, wrapGAppsHook, gvfs, gtk3, atomEnv }:
 
 let
+  versions = {
+    atom = {
+      version = "1.42.0";
+      sha256 = "1ira528nwxi30jfwyivlac3wkkqb9d2z4jhxwq5m7mnpm5yli6jy";
+    };
+
+    atom-beta = {
+      version = "1.43.0";
+      beta = 0;
+      sha256 = "06if3w5hx7njmyal0012zawn8f5af1z4bjcbzj2c0gd15nlsgm95";
+    };
+  };
+
   common = pname: {version, sha256, beta ? null}:
       let fullVersion = version + stdenv.lib.optionalString (beta != null) "-beta${toString beta}";
       name = "${pname}-${fullVersion}";
@@ -31,8 +44,7 @@ let
     buildCommand = ''
       mkdir -p $out/usr/
       ar p $src data.tar.xz | tar -C $out -xJ ./usr
-      substituteInPlace $out/usr/share/applications/${pname}.desktop \
-        --replace /usr/share/${pname} $out/bin
+      sed -i -e "s|Exec=.*$|Exec=$out/bin/${pname}|" $out/usr/share/applications/${pname}.desktop
       mv $out/usr/* $out/
       rm -r $out/share/lintian
       rm -r $out/usr/
@@ -58,28 +70,14 @@ let
       ln -s ${pkgs.git}/bin/git $dugite/git/libexec/git-core/git
 
       find $share -name "*.node" -exec patchelf --set-rpath "${atomEnv.libPath}:$share" {} \;
-
-      paxmark m $share/atom
-      paxmark m $share/resources/app/apm/bin/node
     '';
 
     meta = with stdenv.lib; {
       description = "A hackable text editor for the 21st Century";
       homepage = https://atom.io/;
       license = licenses.mit;
-      maintainers = with maintainers; [ offline nequissimus synthetica ysndr ];
+      maintainers = with maintainers; [ offline nequissimus ysndr ];
       platforms = platforms.x86_64;
     };
   };
-in stdenv.lib.mapAttrs common {
-  atom = {
-    version = "1.31.2";
-    sha256 = "1szx9p2nz1qzjpig0l8h4hj5mqwpjvkcynn8crh21drply4bpfr0";
-  };
-
-  atom-beta = {
-    version = "1.32.0";
-    beta = 0;
-    sha256 = "12k5cn70a0diyaqbmq6s6l2sbi9i3d9p7i38qnm97lnw0y1kh0jm";
-  };
-}
+in stdenv.lib.mapAttrs common versions

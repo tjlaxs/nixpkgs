@@ -3,13 +3,13 @@
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  name = "kakoune-unstable-${version}";
-  version = "2018.09.04";
+  pname = "kakoune-unwrapped";
+  version = "2020.01.16";
   src = fetchFromGitHub {
     repo = "kakoune";
     owner = "mawww";
     rev = "v${version}";
-    sha256 = "08v55hh7whm6hx6a047gszh0h5g35k3r8r52aggv7r2ybzrrw6w1";
+    sha256 = "16v6z1nzj54j19fraxhb18jdby4zfs1br91gxpg9s2s4nsk0km0b";
   };
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [ ncurses asciidoc docbook_xsl libxslt ];
@@ -19,6 +19,15 @@ stdenv.mkDerivation rec {
     export PREFIX=$out
     cd src
     sed -ie 's#--no-xmllint#--no-xmllint --xsltproc-opts="--nonet"#g' Makefile
+  '';
+
+  preConfigure = ''
+    export version="v${version}"
+  '';
+
+  doInstallCheckPhase = true;
+  installCheckPhase = ''
+    $out/bin/kak -ui json -E "kill 0"
   '';
 
   meta = {

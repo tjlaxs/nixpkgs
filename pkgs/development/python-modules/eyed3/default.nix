@@ -1,22 +1,39 @@
 { stdenv
 , buildPythonPackage
-, fetchurl
+, fetchPypi
+, pythonAtLeast
+, pythonOlder
 , paver
 , python
 , isPyPy
+, six
+, pathlib
+, python_magic
+, lib
 }:
 
 buildPythonPackage rec {
-  version = "0.7.8";
+  version = "0.8.12";
   pname    = "eyeD3";
   disabled = isPyPy;
 
-  src = fetchurl {
-    url = "http://eyed3.nicfit.net/releases/${pname}-${version}.tar.gz";
-    sha256 = "1nv7nhfn1d0qm7rgkzksbccgqisng8klf97np0nwaqwd5dbmdf86";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "e54eec0a03fb8e7e9e8b509546c6d92efbc871ea7597611fe2c16f03e1c94b6d";
   };
 
+  # https://github.com/nicfit/eyeD3/pull/284
+  postPatch = lib.optionalString (pythonAtLeast "3.4") ''
+    sed -ie '/pathlib/d' requirements/requirements.yml
+  '';
+
   buildInputs = [ paver ];
+
+  # requires special test data:
+  # https://github.com/nicfit/eyeD3/blob/103198e265e3279384f35304e8218be6717c2976/Makefile#L97
+  doCheck = false;
+
+  propagatedBuildInputs = [ six python_magic ] ++ lib.optional (pythonOlder "3.4") pathlib;
 
   postInstall = ''
     for prog in "$out/bin/"*; do
@@ -27,7 +44,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "A Python module and command line program for processing ID3 tags";
-    homepage    = http://eyed3.nicfit.net/;
+    homepage    = https://eyed3.nicfit.net/;
     license     = licenses.gpl2;
     maintainers = with maintainers; [ lovek323 ];
     platforms   = platforms.unix;

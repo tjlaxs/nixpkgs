@@ -1,37 +1,52 @@
 { lib
+, stdenv
 , buildPythonPackage
 , fetchPypi
-, nose
-, isPy27
-, mock
+, fetchpatch
+, flaky
 , ipython
 , jupyter_client
-, pexpect
 , traitlets
 , tornado
+, pythonOlder
+, pytestCheckHook
+, nose
 }:
 
 buildPythonPackage rec {
   pname = "ipykernel";
-  version = "4.8.2";
+  version = "5.1.4";
+  disabled = pythonOlder "3.4";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c091449dd0fad7710ddd9c4a06e8b9e15277da306590bc07a3a1afa6b4453c8f";
+    sha256 = "7f1f01df22f1229c8879501057877ccaf92a3b01c1d00db708aad5003e5f9238";
   };
 
-  buildInputs = [ nose ] ++ lib.optional isPy27 mock;
-  propagatedBuildInputs = [
-    ipython
-    jupyter_client
-    pexpect
-    traitlets
-    tornado
+  propagatedBuildInputs = [ ipython jupyter_client traitlets tornado ];
+
+  # https://github.com/ipython/ipykernel/pull/377
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/ipython/ipykernel/commit/a3bf849dbd368a1826deb9dfc94c2bd3e5ed04fe.patch";
+      sha256 = "1yhpwqixlf98a3n620z92mfips3riw6psijqnc5jgs2p58fgs2yc";
+    })
   ];
 
-  # Tests require backends.
-  # I don't want to add all supported backends as propagatedBuildInputs
-  doCheck = false;
+  checkInputs = [ pytestCheckHook nose flaky ];
+  dontUseSetuptoolsCheck = true;
+  preCheck = ''
+    export HOME=$(mktemp -d)
+  '';
+  disabledTests = lib.optionals stdenv.isDarwin [
+    # see https://github.com/NixOS/nixpkgs/issues/76197
+    "test_subprocess_print"
+    "test_subprocess_error"
+    "test_ipython_start_kernel_no_userns"
+  ];
+
+  # Some of the tests use localhost networking.
+  __darwinAllowLocalNetworking = true;
 
   meta = {
     description = "IPython Kernel for Jupyter";

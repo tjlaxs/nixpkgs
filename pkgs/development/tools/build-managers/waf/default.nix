@@ -1,14 +1,20 @@
-{ stdenv, fetchFromGitLab, python, ensureNewerSourcesForZipFilesHook }:
-
+{ stdenv, fetchFromGitLab, python, ensureNewerSourcesForZipFilesHook
+# optional list of extra waf tools, e.g. `[ "doxygen" "pytest" ]`
+, withTools ? null
+}:
+let
+  wafToolsArg = with stdenv.lib.strings;
+    optionalString (!isNull withTools) " --tools=\"${concatStringsSep "," withTools}\"";
+in
 stdenv.mkDerivation rec {
-  name = "waf-${version}";
-  version = "2.0.10";
+  pname = "waf";
+  version = "2.0.19";
 
   src = fetchFromGitLab {
     owner = "ita1024";
     repo = "waf";
-    rev = name;
-    sha256 = "12p5myq72r5qg7wp2gwbnyvh6lzzcrwp9h3dw194x38g52m0prc7";
+    rev = "${pname}-${version}";
+    sha256 = "1ydmx20blr776qnmnqp0whyiy81a3glln49m9fva2cmampmandpb";
   };
 
   buildInputs = [ python ensureNewerSourcesForZipFilesHook ];
@@ -17,7 +23,7 @@ stdenv.mkDerivation rec {
     python waf-light configure
   '';
   buildPhase = ''
-    python waf-light build
+    python waf-light build${wafToolsArg}
   '';
   installPhase = ''
     install waf $out

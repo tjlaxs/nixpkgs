@@ -3,11 +3,11 @@
 
 buildPythonPackage rec {
   pname = "pyunifi";
-  version = "2.14";
+  version = "2.19.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "9439ffc992ce381a39d64b5e3f4460e53872faa9cca60dcf5cee94fc0eba7fca";
+    sha256 = "f022eb2135b88a9d391f4553fac1bf90f3808d660fd0058203f6f9e57214626b";
   };
 
   propagatedBuildInputs = [ requests ];

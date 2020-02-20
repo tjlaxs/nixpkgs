@@ -2,11 +2,11 @@
 
 buildPythonPackage rec {
   pname = "bottle";
-  version = "0.12.13";
+  version = "0.12.18";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "39b751aee0b167be8dffb63ca81b735bbf1dd0905b3bc42761efedee8f123355";
+    sha256 = "0819b74b145a7def225c0e83b16a4d5711fde751cd92bae467a69efce720f69e";
   };
 
   propagatedBuildInputs = [ setuptools ];

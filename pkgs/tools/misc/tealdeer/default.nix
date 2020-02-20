@@ -1,19 +1,22 @@
-{ stdenv, rustPlatform, fetchFromGitHub, pkgconfig, openssl, cacert, curl }:
+{ stdenv, rustPlatform, fetchFromGitHub, pkgconfig, openssl, cacert, curl
+, Security
+}:
 
 rustPlatform.buildRustPackage rec {
-  name = "tealdeer-${version}";
-  version = "1.0.0";
+  pname = "tealdeer";
+  version = "1.2.0";
 
   src = fetchFromGitHub {
     owner = "dbrgn";
     repo = "tealdeer";
     rev = "v${version}";
-    sha256 = "0mkcja9agkbj2i93hx01r77w66ca805v4wvivcnrqmzid001717v";
+    sha256 = "1v9wq4k7k4lmdz6xy6kabchjpbx9lds20yh6va87shypdh9iva29";
   };
 
-  cargoSha256 = "1qrvic7b6g3f3gjzx7x97ipp7ppa79c0aawn0lsav0c9xxzl44jq";
+  cargoSha256 = "0rr9mqylcs3nb7wgilp810qia0rv2pnalyhh28q0wnqyz0kqfrzr";
 
-  buildInputs = [ openssl cacert curl ];
+  buildInputs = [ openssl cacert curl ]
+    ++ (stdenv.lib.optional stdenv.isDarwin Security);
 
   nativeBuildInputs = [ pkgconfig ];
   
@@ -25,7 +28,7 @@ rustPlatform.buildRustPackage rec {
   doCheck = false;
 
   meta = with stdenv.lib; {
-    description = "An implementation of tldr in Rust";
+    description = "A very fast implementation of tldr in Rust";
     homepage = "https://github.com/dbrgn/tealdeer";
     maintainers = with maintainers; [ davidak ];
     license = with licenses; [ asl20 mit ];

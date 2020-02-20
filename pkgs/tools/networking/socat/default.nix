@@ -1,11 +1,11 @@
 { stdenv, fetchurl, openssl, readline, which, nettools }:
 
 stdenv.mkDerivation rec {
-  name = "socat-1.7.3.2";
+  name = "socat-1.7.3.4";
 
   src = fetchurl {
     url = "http://www.dest-unreach.org/socat/download/${name}.tar.bz2";
-    sha256 = "0lcj6zpra33xhgvhmz9l3cqz10v8ybafb8dd1yqkwf1rhy01ymp3";
+    sha256 = "1z7xgnwiqpcv1j6aghhj9nqbx7cg3gpc4n9j7vi9hm7nhv5788wp";
   };
 
   postPatch = ''

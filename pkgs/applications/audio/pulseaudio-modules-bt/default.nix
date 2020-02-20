@@ -5,7 +5,9 @@
 , pkgconfig
 , ffmpeg_4
 , patchelf
+, fdk_aac
 , libtool
+, ldacbt
 , cmake
 , bluez
 , dbus
@@ -21,19 +23,19 @@ let
   '';
 
 in stdenv.mkDerivation rec {
-  name = "pulseaudio-modules-bt-${version}";
-  version = "unstable-2018-10-16";
+  pname = "pulseaudio-modules-bt";
+  version = "1.3";
 
   src = fetchFromGitHub {
     owner = "EHfive";
     repo = "pulseaudio-modules-bt";
-    rev = "552c2b48c0cc7dd44d0746b261f7c7d5559e8e30";
-    sha256 = "052jb1hjx1in7bafx4zpn78s7r6f2y7djriwi36dzqy9wmalmyjy";
-    fetchSubmodules = true;
+    rev = "v${version}";
+    sha256 = "00xmidcw4fvpbmg0nsm2gk5zw26fpyjbc0pjk6mzr570zbnyqqbn";
   };
 
   patches = [
     ./fix-install-path.patch
+    ./fix-aac-defaults.patch
   ];
 
   nativeBuildInputs = [
@@ -45,7 +47,9 @@ in stdenv.mkDerivation rec {
   buildInputs = [
     pulseaudio
     ffmpeg_4
+    fdk_aac
     libtool
+    ldacbt
     bluez
     dbus
     sbc
@@ -65,14 +69,14 @@ in stdenv.mkDerivation rec {
     for so in $out/lib/pulse-${pulseaudio.version}/modules/*.so; do
       orig_rpath=$(patchelf --print-rpath "$so")
       patchelf \
-        --set-rpath "${lib.getLib ffmpeg_4}/lib:$out/lib/pulse-${pulseaudio.version}/modules:$orig_rpath" \
+        --set-rpath "${ldacbt}/lib:${lib.getLib ffmpeg_4}/lib:$out/lib/pulse-${pulseaudio.version}/modules:$orig_rpath" \
         "$so"
     done
   '';
 
   meta = with stdenv.lib; {
     homepage = https://github.com/EHfive/pulseaudio-modules-bt;
-    description = "SBC, Sony LDAC codec (A2DP Audio) support for Pulseaudio";
+    description = "LDAC, aptX, aptX HD, AAC codecs (A2DP Audio) support for Linux PulseAudio";
     platforms = platforms.linux;
     license = licenses.mit;
     maintainers = with maintainers; [ adisbladis ];

@@ -1,10 +1,15 @@
 { stdenv
 , buildPythonPackage
 , fetchPypi
-, fetchpatch
 , requests
 , pytz
 , tzlocal
+, i3ipc
+, pydbus
+, pygobject3
+, pyserial
+, setuptools
+, dbus-python
 
 , file
 , acpi
@@ -19,21 +24,17 @@
 
 buildPythonPackage rec {
   pname = "py3status";
-  version = "3.12";
-  
+  version = "3.22";
+
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c9ef49f72c2d83976d2841ab7e70faee3c77f4d7dbb2d3390ef0f0509473ea9a";
-  };
-
-  # ImportError: cannot import name '_to_ascii'
-  patches = fetchpatch {
-    url = "${meta.homepage}/commit/8a48e01cb68b514b532f56037e4f5a6c19662de5.patch";
-    sha256 = "0v1yja5lvdjk6vh13lvh07n7aw5hjcy7v9lrs2dfb0y0cjw4kx9n";
+    sha256 = "5e9884dde128e1bd82f8746e8f8806c8d7d89d95ce9ed7bacf7cc5fdb094aa21";
   };
 
   doCheck = false;
-  propagatedBuildInputs = [ pytz requests tzlocal ];
+  propagatedBuildInputs = [
+    pytz requests tzlocal i3ipc pydbus pygobject3 pyserial setuptools dbus-python
+  ];
   buildInputs = [ file ];
   prePatch = ''
     sed -i -e "s|'file|'${file}/bin/file|" py3status/parse_config.py
@@ -52,6 +53,6 @@ buildPythonPackage rec {
     description = "Extensible i3status wrapper";
     license = licenses.bsd3;
     homepage = https://github.com/ultrabug/py3status;
-    maintainers = with maintainers; [ garbas ];
+    maintainers = with maintainers; [ ];
   };
 }

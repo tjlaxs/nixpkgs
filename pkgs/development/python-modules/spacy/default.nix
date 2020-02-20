@@ -2,14 +2,12 @@
 , buildPythonPackage
 , fetchPypi
 , pythonOlder
-, html5lib
 , pytest
 , preshed
 , ftfy
 , numpy
 , murmurhash
 , plac
-, six
 , ujson
 , dill
 , requests
@@ -17,26 +15,24 @@
 , regex
 , cymem
 , pathlib
-, msgpack-python
+, msgpack
 , msgpack-numpy
+, jsonschema
+, blis
+, wasabi
+, srsly
+, catalogue
+, setuptools
 }:
 
 buildPythonPackage rec {
   pname = "spacy";
-  version = "2.0.16";
+  version = "2.2.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1ghgbv819ff4777904p1kzayq1dj34i7853anvg859sak59r7pj1";
+    sha256 = "0shfjk6nhm6gzp5p88pz5k7bkg5dr3x9yvandkayqb2vsvkwj50x";
   };
-
-  prePatch = ''
-    substituteInPlace setup.py \
-      --replace "regex==" "regex>=" \
-      --replace "plac<1.0.0,>=0.9.6" "plac>=0.9.6" \
-      --replace "thinc>=6.12.0,<6.13.0" "thinc>=6.12.0" \
-      --replace "wheel>=0.32.0,<0.33.0" "wheel>=0.31.0"
-  '';
 
   propagatedBuildInputs = [
    numpy
@@ -45,15 +41,19 @@ buildPythonPackage rec {
    preshed
    thinc
    plac
-   six
-   html5lib
    ujson
    dill
    requests
    regex
    ftfy
-   msgpack-python
+   msgpack
    msgpack-numpy
+   jsonschema
+   blis
+   wasabi
+   srsly
+   catalogue
+   setuptools
   ] ++ lib.optional (pythonOlder "3.4") pathlib;
 
   checkInputs = [
@@ -69,6 +69,6 @@ buildPythonPackage rec {
     description = "Industrial-strength Natural Language Processing (NLP) with Python and Cython";
     homepage = https://github.com/explosion/spaCy;
     license = licenses.mit;
-    maintainers = with maintainers; [ sdll ];
+    maintainers = with maintainers; [ danieldk sdll ];
     };
 }

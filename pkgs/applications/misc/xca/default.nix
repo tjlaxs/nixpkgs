@@ -2,14 +2,14 @@
 , libtool, openssl, qtbase, qttools }:
 
 mkDerivation rec {
-  name = "xca-${version}";
-  version = "2.1.1";
+  pname = "xca";
+  version = "2.2.1";
 
   src = fetchFromGitHub {
     owner  = "chris2511";
     repo   = "xca";
     rev    = "RELEASE.${version}";
-    sha256 = "1d09329a80axwqhxixwasd8scsmh23vsq1076amy5c8173s4ambi";
+    sha256 = "0na2816lkfkkvssh9kmf5vwy6x8kd4x7h138jzy61wrvs69vhnbi";
   };
 
   postPatch = ''

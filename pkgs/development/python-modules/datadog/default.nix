@@ -1,28 +1,26 @@
-{ lib, buildPythonPackage, fetchFromGitHub
-, decorator, requests, simplejson
-, nose, mock }:
+{ lib, buildPythonPackage, fetchPypi
+, decorator, requests, simplejson, pillow
+, nose, mock, pytest, freezegun }:
 
 buildPythonPackage rec {
   pname = "datadog";
-  version = "0.20.0";
+  version = "0.33.0";
 
-  # no tests in PyPI tarball
-  # https://github.com/DataDog/datadogpy/pull/259
-  src = fetchFromGitHub {
-    owner = "DataDog";
-    repo = "datadogpy";
-    rev = "v${version}";
-    sha256 = "1p4p14853yrsl8py4ca7za7a12qzw0xwgz64f5kzx8a6vpv3p3md";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "bce73f33a4496b004402baa502251150e3b48a48f610ff89d4cd110b366ee0ab";
   };
 
-  propagatedBuildInputs = [ decorator requests simplejson ];
+  postPatch = ''
+    find . -name '*.pyc' -exec rm {} \;
+  '';
 
-  checkInputs = [ nose mock ];
+  propagatedBuildInputs = [ decorator requests simplejson pillow ];
 
-  # v0.20.0 tests are nondeterministic:
-  # test_send_batch_metrics: https://hydra.nixos.org/build/74920933
-  # test_timed_decorator_threaded: https://hydra.nixos.org/build/74328993
-  doCheck = false;
+  checkInputs = [ nose mock pytest freezegun ];
+  checkPhase = ''
+    pytest tests/unit
+  '';
 
   meta = with lib; {
     description = "The Datadog Python library";

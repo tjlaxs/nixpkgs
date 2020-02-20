@@ -1,37 +1,28 @@
-{ stdenv, buildGoPackage, fetchFromGitHub, fetchpatch }:
+{ stdenv, buildGoModule, fetchFromGitHub }:
 
-buildGoPackage rec {
-  name = "hugo-${version}";
-  version = "0.47.1";
+buildGoModule rec {
+  pname = "hugo";
+  version = "0.64.1";
 
   goPackagePath = "github.com/gohugoio/hugo";
 
   src = fetchFromGitHub {
-    owner  = "gohugoio";
-    repo   = "hugo";
-    rev    = "v${version}";
-    sha256 = "0n27vyg66jfx4lwswsmdlybly8c9gy5rk7yhy7wzs3rwzlqv1jzj";
+    owner = "gohugoio";
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "1h5n5d7g3l2lp25sjrcmavbkqqm1csgv2q5z7afwbb57j0m1nkn8";
   };
 
-  patches = [
-    (fetchpatch {
-      url = "https://github.com/gohugoio/hugo/commit/b137ad4dbd6d14d0a9af68c044aaee61f2c87fe5.diff";
-      sha256 = "0w1gpg11idqywqcpwzvx4xabn02kk8y4jmyz4h67mc3yh2dhq3ll";
-    })
-  ];
+  modSha256 = "18wfsp3ypfxj5qljmb19kzyc5byf413nkabz5mfvq8srjhcq1ifl";
 
-  goDeps = ./deps.nix;
+  buildFlags = [ "-tags" "extended" ];
 
-  buildFlags = "-tags extended";
-
-  postInstall = ''
-    rm $bin/bin/generate
-  '';
+  subPackages = [ "." ];
 
   meta = with stdenv.lib; {
     description = "A fast and modern static website engine.";
-    homepage = https://gohugo.io;
+    homepage = "https://gohugo.io";
     license = licenses.asl20;
-    maintainers = with maintainers; [ schneefux ];
+    maintainers = with maintainers; [ schneefux filalex77 Frostman ];
   };
 }

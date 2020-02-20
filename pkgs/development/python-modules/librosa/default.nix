@@ -8,18 +8,19 @@
 , decorator
 , audioread
 , resampy
+, soundfile
 }:
 
 buildPythonPackage rec {
   pname = "librosa";
-  version = "0.4.3";
+  version = "0.7.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "209626c53556ca3922e52d2fae767bf5b398948c867fcc8898f948695dacb247";
+    sha256 = "cca58a2d9a47e35be63a3ce36482d241453bfe9b14bde2005430f969bd7d013a";
   };
 
-  propagatedBuildInputs = [ joblib matplotlib six scikitlearn decorator audioread resampy ];
+  propagatedBuildInputs = [ joblib matplotlib six scikitlearn decorator audioread resampy soundfile ];
 
   # No tests
   doCheck = false;

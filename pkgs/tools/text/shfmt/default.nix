@@ -1,18 +1,18 @@
-{ stdenv, buildGoPackage, fetchFromGitHub }:
+{ stdenv, buildGoModule, fetchFromGitHub }:
 
-buildGoPackage rec {
-  name = "shfmt-${version}";
-  version = "1.1.0";
-  rev = "v${version}";
-
-  goPackagePath = "github.com/mvdan/sh";
+buildGoModule rec {
+  pname = "shfmt";
+  version = "3.0.1";
 
   src = fetchFromGitHub {
     owner = "mvdan";
     repo = "sh";
-    inherit rev;
-    sha256 = "0h1qy27z6j1cgkk3hkvl7w3wjqc5flgn92r3j6frn8k2wzwj7zhz";
+    rev = "v${version}";
+    sha256 = "1y6n2xi8m579xksnnsdzb4zvcvij48kywjfqzp7qm43ni8g7w9a8";
   };
+
+  modSha256 = "1ll2cxhgf8hh19wzdykgc81c4yfcp8bzmfaif08nvvb63rhjdb5y";
+  subPackages = ["cmd/shfmt"];
 
   meta = with stdenv.lib; {
     homepage = https://github.com/mvdan/sh;

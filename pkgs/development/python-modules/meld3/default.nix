@@ -5,11 +5,11 @@
 
 buildPythonPackage rec {
   pname = "meld3";
-  version = "1.0.0";
+  version = "2.0.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "57b41eebbb5a82d4a928608962616442e239ec6d611fe6f46343e765e36f0b2b";
+    sha256 = "1fbyafwi0d54394hkmp65nf6vk0qm4kipf5z60pdp4244rvadz8y";
   };
 
   doCheck = false;

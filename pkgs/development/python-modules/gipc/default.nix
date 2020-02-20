@@ -1,19 +1,16 @@
 { stdenv
 , buildPythonPackage
 , fetchPypi
-, isPy3k
 , gevent
 }:
 
 buildPythonPackage rec {
   pname = "gipc";
-  version = "0.5.0";
-  disabled = isPy3k;
+  version = "1.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    extension = "zip";
-    sha256 = "08c35xzv7nr12d9xwlywlbyzzz2igy0yy6y52q2nrkmh5d4slbpc";
+    sha256 = "1zg5bm30lqqd8x0jqbvr4yi8i4rzzk2hdnh280qnj2bwm5nqpghi";
   };
 
   propagatedBuildInputs = [ gevent ];

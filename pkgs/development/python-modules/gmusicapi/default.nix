@@ -20,11 +20,11 @@
 
 buildPythonPackage rec {
   pname = "gmusicapi";
-  version = "10.1.0";
+  version = "12.1.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0smlrafh1bjzrcjzl7im8pf8f04gcnx92lf3g5qr7yzgq8k20xa2";
+    sha256 = "1cgjxqi4a18zp5dx7v71h6wiy3cvggyydkrs008dsfgyhg8s89d8";
   };
 
   propagatedBuildInputs = [ validictory decorator mutagen protobuf setuptools requests dateutil proboscis mock appdirs oauth2client pyopenssl gpsoauth MechanicalSoup future ];

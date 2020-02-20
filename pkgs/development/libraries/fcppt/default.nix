@@ -1,20 +1,20 @@
-{ stdenv, fetchFromGitHub, cmake, boost, brigand }:
+{ stdenv, fetchFromGitHub, cmake, boost, brigand, catch2 }:
 
 stdenv.mkDerivation rec {
-  name = "fcppt-${version}";
-  version = "2.9.0";
+  pname = "fcppt";
+  version = "3.2.2";
 
   src = fetchFromGitHub {
     owner = "freundlich";
     repo = "fcppt";
     rev = version;
-    sha256 = "0zyqgmi1shjbwin1lx428v7vbi6jnywb1d47dascdn89r5gz6klv";
+    sha256 = "09mah52m3lih2n0swpsh8qb72yzl4nixaq99xp7wxyxxprhf4bpa";
   };
 
   nativeBuildInputs = [ cmake ];
-  buildInputs = [ boost ];
+  buildInputs = [ boost catch2 ];
 
-  cmakeFlags = [ "-DENABLE_EXAMPLES=false" "-DENABLE_TEST=false" "-DBrigand_INCLUDE_DIR=${brigand}/include" ];
+  cmakeFlags = [ "-DENABLE_EXAMPLES=false" "-DENABLE_CATCH=true" "-DENABLE_TEST=true" "-DBrigand_INCLUDE_DIR=${brigand}/include" ];
 
   enableParallelBuilding = true;
 

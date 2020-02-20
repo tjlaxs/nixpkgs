@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "pycountry";
-  version = "1.17";
+  version = "19.8.18";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1qvhq0c9xsh6d4apcvjphfzl6xnwhnk4jvhr8x2fdfnmb034lc26";
+    sha256 = "1jxkdjffrhn0il0nm14dlzxpd6f3v1hbxzxsprcksafgmm0almrw";
   };
 
   meta = with stdenv.lib; {

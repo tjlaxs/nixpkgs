@@ -1,25 +1,33 @@
-{ stdenv, lib, rustPlatform, fetchFromGitHub, dbus, gdk_pixbuf, libnotify, makeWrapper, pkgconfig, xorg
-, enableAlsaUtils ? true, alsaUtils }:
+{ stdenv, lib, rustPlatform, fetchFromGitHub, dbus, gdk-pixbuf, libnotify, makeWrapper, pkgconfig, xorg
+, enableAlsaUtils ? true, alsaUtils, coreutils
+, enableNetwork ? true, dnsutils, iproute, wirelesstools }:
+
+let
+  bins = lib.optionals enableAlsaUtils [ alsaUtils coreutils ]
+    ++ lib.optionals enableNetwork [ dnsutils iproute wirelesstools ];
+in
 
 rustPlatform.buildRustPackage rec {
-  name = "dwm-status-${version}";
-  version = "1.1.2";
+  pname = "dwm-status";
+  version = "1.6.3";
 
   src = fetchFromGitHub {
     owner = "Gerschtli";
     repo = "dwm-status";
     rev = version;
-    sha256 = "1nyi0p9snx9hddb4hliihskj4gdp933xs0f8kydyiprckikwiyjk";
+    sha256 = "02sprsr7822ynkwpf3xdgmkdrgkw3vgijhlh65bayiv3b5lwb54n";
   };
 
   nativeBuildInputs = [ makeWrapper pkgconfig ];
-  buildInputs = [ dbus gdk_pixbuf libnotify xorg.libX11 ];
+  buildInputs = [ dbus gdk-pixbuf libnotify xorg.libX11 ];
 
-  cargoSha256 = "1ngdzzxnv4y6xprmkawf6s2696zgwiwgb6ykj5adb4knlx5c634d";
+  # Delete this on next update; see #79975 for details
+  legacyCargoFetcher = true;
 
-  postInstall = lib.optionalString enableAlsaUtils ''
-    wrapProgram $out/bin/dwm-status \
-      --prefix "PATH" : "${alsaUtils}/bin"
+  cargoSha256 = "0l6x59bzzilc78gsi5rlgq9zjvp8qjphfsds776ljzmkbdq8q4iz";
+
+  postInstall = lib.optionalString (bins != [])  ''
+    wrapProgram $out/bin/dwm-status --prefix "PATH" : "${stdenv.lib.makeBinPath bins}"
   '';
 
   meta = with stdenv.lib; {

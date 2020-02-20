@@ -9,11 +9,11 @@
 
 buildPythonPackage rec {
   pname = "warlock";
-  version = "1.2.0";
+  version = "1.3.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0npgi4ks0nww2d6ci791iayab0j6kz6dx3jr7bhpgkql3s4if3bw";
+    sha256 = "a093c4d04b42b7907f69086e476a766b7639dca50d95edc83aef6aeab9db2090";
   };
 
   propagatedBuildInputs = [ six jsonpatch jsonschema jsonpointer ];

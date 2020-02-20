@@ -2,7 +2,7 @@
 
 let
   name = "stgit-${version}";
-  version = "0.18";
+  version = "0.21";
 in
 stdenv.mkDerivation {
   inherit name;
@@ -11,12 +11,12 @@ stdenv.mkDerivation {
     owner = "ctmarinas";
     repo = "stgit";
     rev = "v${version}";
-    sha256 = "0ydgg744m671nkhg7h4q2z3b9vpbc9914rbc0wcgimqfqsxkxx2y";
+    sha256 = "16gwdad18rc9bivyzrjccp83iccmqr45fp2zawycmrfp2ancffc7";
   };
 
   buildInputs = [ python2 git ];
 
-  makeFlags = "prefix=$$out";
+  makeFlags = [ "prefix=$$out" ];
 
   postInstall = ''
     mkdir -p "$out/etc/bash_completion.d/"

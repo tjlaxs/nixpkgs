@@ -1,11 +1,14 @@
-{ stdenv, skawarePackages }:
+{ lib, skawarePackages
+# for execlineb-with-builtins
+, coreutils, gnugrep, writeScriptBin, runCommand, runCommandCC
+}:
 
 with skawarePackages;
 
 buildPackage {
   pname = "execline";
-  version = "2.5.0.1";
-  sha256 = "0j8hwdw8wn0rv8njdza8fbgmvyjg7hqp3qlbw00i7fwskr7d21wd";
+  version = "2.5.3.0";
+  sha256 = "0czdrv9m8mnx94nf28dafij6z03k4mbhbs6hccfaardfd5l5q805";
 
   description = "A small scripting language, to be used in place of a shell in non-interactive scripts";
 
@@ -30,6 +33,17 @@ buildPackage {
 
     mv doc $doc/share/doc/execline/html
     mv examples $doc/share/doc/execline/examples
-  '';
 
+    mv $bin/bin/execlineb $bin/bin/.execlineb-wrapped
+    cc \
+      -O \
+      -Wall -Wpedantic \
+      -D "EXECLINEB_PATH()=\"$bin/bin/.execlineb-wrapped\"" \
+      -D "EXECLINE_BIN_PATH()=\"$bin/bin\"" \
+      -I "${skalibs.dev}/include" \
+      -L "${skalibs.lib}/lib" \
+      -lskarnet \
+      -o "$bin/bin/execlineb" \
+      ${./execlineb-wrapper.c}
+  '';
 }

@@ -16,12 +16,12 @@
 buildPythonPackage rec {
   pname = "coveralls";
   name = "${pname}-python-${version}";
-  version = "1.4.0";
+  version = "1.9.2";
 
   # wanted by tests
   src = fetchPypi {
     inherit pname version;
-    sha256 = "7ddb2e3114db9604a7cb1fcc68a7dcca32dce346f5ba568c99979b38e166f5a6";
+    sha256 = "8e3315e8620bb6b3c6f3179a75f498e7179c93b3ddc440352404f941b1f70524";
   };
 
   checkInputs = [

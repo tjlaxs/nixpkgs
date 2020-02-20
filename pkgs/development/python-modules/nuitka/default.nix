@@ -3,7 +3,6 @@
 , fetchurl
 , vmprof
 , pyqt4
-, scons
 , isPyPy
 , pkgs
 }:
@@ -13,18 +12,17 @@ let
   # Therefore we create a separate env for it.
   scons = pkgs.python27.withPackages(ps: [ pkgs.scons ]);
 in buildPythonPackage rec {
-  version = "0.5.25";
+  version = "0.6.7";
   pname = "Nuitka";
 
   # Latest version is not yet on PyPi
   src = fetchurl {
     url = "https://github.com/kayhayen/Nuitka/archive/${version}.tar.gz";
-    sha256 = "11psz0pyj56adv4b3f47hl8jakvp2mc2c85s092a5rsv1la1a0aa";
+    sha256 = "09mrm7iz2wdrd7y2csbcidg6bkskjignx2pnifh4i8zlh0vm61bg";
   };
 
-  buildInputs = stdenv.lib.optionals doCheck [ vmprof pyqt4 ];
-
-  propagatedBuildInputs = [ scons ];
+  checkInputs = [ vmprof pyqt4 ];
+  nativeBuildInputs = [ scons ];
 
   postPatch = ''
     patchShebangs tests/run-tests
@@ -48,7 +46,7 @@ in buildPythonPackage rec {
   meta = with stdenv.lib; {
     description = "Python compiler with full language support and CPython compatibility";
     license = licenses.asl20;
-    homepage = http://nuitka.net/;
+    homepage = https://nuitka.net/;
   };
 
 }

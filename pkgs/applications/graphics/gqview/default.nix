@@ -18,6 +18,8 @@ stdenv.mkDerivation {
 
   hardeningDisable = [ "format" ];
 
+  NIX_LDFLAGS = "-lm";
+
   meta = with stdenv.lib; {
     description = "A fast image viewer";
     homepage = http://gqview.sourceforge.net;

@@ -2,20 +2,20 @@
 
 let
   arch = {
-    "x86_64-linux" = "x64";
-    "i686-linux" = "i386";
+    x86_64-linux = "x64";
+    i686-linux = "i386";
   }.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
   libPath = stdenv.lib.makeLibraryPath [ stdenv.cc.libc ];
 
 in stdenv.mkDerivation rec {
-  name = "resilio-sync-${version}";
-  version = "2.6.1";
+  pname = "resilio-sync";
+  version = "2.6.4";
 
   src = fetchurl {
     url = "https://download-cdn.resilio.com/${version}/linux-${arch}/resilio-sync_${arch}.tar.gz";
     sha256 = {
-      "x86_64-linux" = "02wbllrj80kqpyywfr05fsqpgwrv2i8smr3gfdpn7ni9b8hkj0ji";
-      "i686-linux"   = "02zhh6gfds6miznbx30ghzihhm330mh5xnm42mxj8j29aqlzgd95";
+      x86_64-linux = "1c1yksjag58p7yjm72iiz82p2r01lq7kxvq7z5phmq5z6gxdg4a8";
+      i686-linux   = "167baz9fzmzk50jffzvgmgyw1zw3955r3cb73z23qvw8zqzdqydc";
     }.${stdenv.hostPlatform.system};
   };
 

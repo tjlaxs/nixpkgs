@@ -1,20 +1,21 @@
-{ stdenv, buildPythonPackage, fetchPypi, six }:
+{ stdenv, buildPythonPackage, fetchPypi, mock, six }:
 
 buildPythonPackage rec {
   pname = "whisper";
-  version = "1.1.4";
+  version = "1.1.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "ee9128873b5f9c97d258d35d0a32ef8e62c9da473fbbd056982df1f36f0b37aa";
+    sha256 = "8dbb3b7cf4a02a080162467fff5cd38bf77940c3e2b25f7c4f78529427ca9cfe";
   };
 
   propagatedBuildInputs = [ six ];
+  checkInputs = [ mock ];
 
   meta = with stdenv.lib; {
     homepage = http://graphite.wikidot.com/;
     description = "Fixed size round-robin style database";
-    maintainers = with maintainers; [ rickynils offline basvandijk ];
+    maintainers = with maintainers; [ offline basvandijk ];
     license = licenses.asl20;
   };
 }

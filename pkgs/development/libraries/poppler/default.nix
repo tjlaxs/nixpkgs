@@ -1,22 +1,22 @@
-{ stdenv, lib, fetchurl, cmake, ninja, pkgconfig, libiconv, libintl
+{ stdenv, lib, fetchurl, fetchpatch, cmake, ninja, pkgconfig, libiconv, libintl
 , zlib, curl, cairo, freetype, fontconfig, lcms, libjpeg, openjpeg
 , withData ? true, poppler_data
 , qt5Support ? false, qtbase ? null
-, introspectionSupport ? false, gobjectIntrospection ? null
+, introspectionSupport ? false, gobject-introspection ? null
 , utils ? false, nss ? null
 , minimal ? false, suffix ? "glib"
 }:
 
-let # beware: updates often break cups-filters build
-  version = "0.67.0";
+let
   mkFlag = optset: flag: "-DENABLE_${flag}=${if optset then "on" else "off"}";
 in
 stdenv.mkDerivation rec {
   name = "poppler-${suffix}-${version}";
+  version = "0.84.0"; # beware: updates often break cups-filters build, check texlive and scribusUnstable too!
 
   src = fetchurl {
     url = "${meta.homepage}/poppler-${version}.tar.xz";
-    sha256 = "1yb6agmcxf0ixqm65d4aknl0hgmswf94x0k59ic0qqav1wd4yjm3";
+    sha256 = "0ccp2gx05cz5y04k5pgbyi4ikyq60nafa7x2yx4aaf1vfkd318f7";
   };
 
   outputs = [ "out" "dev" ];
@@ -29,15 +29,17 @@ stdenv.mkDerivation rec {
     ++ optionals (!minimal) [ cairo lcms curl ]
     ++ optional qt5Support qtbase
     ++ optional utils nss
-    ++ optional introspectionSupport gobjectIntrospection;
+    ++ optional introspectionSupport gobject-introspection;
 
   nativeBuildInputs = [ cmake ninja pkgconfig ];
 
-  # Not sure when and how to pass it.  It seems an upstream bug anyway.
-  CXXFLAGS = stdenv.lib.optionalString stdenv.cc.isClang "-std=c++11";
+  # Workaround #54606
+  preConfigure = stdenv.lib.optionalString stdenv.isDarwin ''
+    sed -i -e '1i cmake_policy(SET CMP0025 NEW)' CMakeLists.txt
+  '';
 
   cmakeFlags = [
-    (mkFlag true "XPDF_HEADERS")
+    (mkFlag true "UNSTABLE_API_ABI_HEADERS") # previously "XPDF_HEADERS"
     (mkFlag (!minimal) "GLIB")
     (mkFlag (!minimal) "CPP")
     (mkFlag (!minimal) "LIBCURL")

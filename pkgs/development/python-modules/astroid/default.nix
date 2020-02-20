@@ -5,19 +5,19 @@
 
 buildPythonPackage rec {
   pname = "astroid";
-  version = "2.0.4";
+  version = "2.3.3";
 
   disabled = pythonOlder "3.4";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c7013d119ec95eb626f7a2011f0b63d0c9a095df9ad06d8507b37084eada1a8d";
+    sha256 = "71ea07f44df9568a75d0f354c49143a4575d90645e9fead6dfb52c26a85ed13a";
   };
 
   # From astroid/__pkginfo__.py
   propagatedBuildInputs = [ lazy-object-proxy six wrapt ]
     ++ lib.optional (pythonOlder "3.5") typing
-    ++ lib.optional (pythonOlder "3.7" && !isPyPy) typed-ast;
+    ++ lib.optional (!isPyPy) typed-ast;
 
   checkInputs = [ pytestrunner pytest ];
 

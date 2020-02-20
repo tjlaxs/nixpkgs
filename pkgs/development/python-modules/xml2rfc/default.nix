@@ -1,15 +1,38 @@
-{ lib, fetchPypi, buildPythonPackage, intervaltree, pyflakes, requests, lxml }:
+{ lib, fetchPypi, buildPythonPackage, intervaltree, pyflakes, requests, lxml, google-i18n-address
+, pycountry, html5lib, six, kitchen, pypdf2, dict2xml, weasyprint
+, stdenv
+}:
 
 buildPythonPackage rec {
   pname = "xml2rfc";
-  version = "2.10.3";
+  version = "2.37.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "ace45039e9d71713b4bb09ea199644797a7d884fbdd940e4c02559b4bccb01a1";
+    sha256 = "4ae4e99a4b482caac89d8ffd93d16a4510db36907475b1879713a1dc885646ad";
   };
 
-  propagatedBuildInputs = [ intervaltree pyflakes requests lxml ];
+  propagatedBuildInputs = [
+    intervaltree
+    pyflakes
+    requests
+    lxml
+    google-i18n-address
+    pycountry
+    html5lib
+    six
+    kitchen
+    pypdf2
+    dict2xml
+    weasyprint
+  ];
+
+  preCheck = ''
+    export HOME=$(mktemp -d)
+  '';
+
+  # lxml tries to fetch from the internet
+  doCheck = false;
 
   meta = with lib; {
     description = "Tool generating IETF RFCs and drafts from XML sources";
@@ -17,6 +40,6 @@ buildPythonPackage rec {
     # Well, parts might be considered unfree, if being strict; see:
     # http://metadata.ftp-master.debian.org/changelogs/non-free/x/xml2rfc/xml2rfc_2.9.6-1_copyright
     license = licenses.bsd3;
-    maintainers = [ maintainers.vcunat ];
+    maintainers = with maintainers; [ vcunat yrashk ];
   };
 }

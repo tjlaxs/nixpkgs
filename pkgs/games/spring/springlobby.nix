@@ -3,7 +3,7 @@
 , makeWrapper, glib, minizip, alure, pcre, jsoncpp }:
 
 stdenv.mkDerivation rec {
-  name = "springlobby-${version}";
+  pname = "springlobby";
   version = "0.267";
 
   src = fetchurl {
@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
     boost libpng libX11 libnotify gtk2 doxygen makeWrapper glib minizip alure
   ];
 
-  patches = [ ./revert_58b423e.patch ]; # Allows springLobby to continue using system installed spring until #707 is fixed
+  patches = [ ./revert_58b423e.patch ./fix-certs.patch ]; # Allows springLobby to continue using system installed spring until #707 is fixed
 
   enableParallelBuilding = true;
 
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = http://springlobby.info/;
+    homepage = https://springlobby.info/;
     repositories.git = git://github.com/springlobby/springlobby.git;
     description = "Cross-platform lobby client for the Spring RTS project";
     license = licenses.gpl2;

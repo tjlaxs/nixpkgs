@@ -1,18 +1,18 @@
-{ stdenv, buildPythonPackage, fetchPypi, isPy3k, rdkafka, requests, avro3k, avro, futures}:
+{ stdenv, buildPythonPackage, fetchPypi, isPy3k, rdkafka, requests, avro3k, avro, futures, enum34 }:
 
 buildPythonPackage rec {
-  version = "0.11.5";
+  version = "1.3.0";
   pname = "confluent-kafka";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "bfb5807bfb5effd74f2cfe65e4e3e8564a9e72b25e099f655d8ad0d362a63b9f";
+    sha256 = "4025ccddbc79443a4e2342de0d770f669558eb737fca2e7851558cd45f78ef78";
   };
 
-  buildInputs = [ rdkafka requests ] ++ (if isPy3k then [ avro3k ] else [ avro futures ]) ;
+  buildInputs = [ rdkafka requests ] ++ (if isPy3k then [ avro3k ] else [ enum34 avro futures ]) ;
 
-  # Tests fail for python3 under this pypi release
-  doCheck = if isPy3k then false else true;
+  # No tests in PyPi Tarball
+  doCheck = false;
 
   meta = with stdenv.lib; {
     description = "Confluent's Apache Kafka client for Python";

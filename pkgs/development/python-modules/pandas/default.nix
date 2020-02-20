@@ -16,9 +16,11 @@
 , lxml
 , html5lib
 , beautifulsoup4
+, hypothesis
 , openpyxl
 , tables
 , xlwt
+, runtimeShell
 , libcxx ? null
 }:
 
@@ -28,18 +30,18 @@ let
 
 in buildPythonPackage rec {
   pname = "pandas";
-  version = "0.23.4";
+  version = "1.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "5b24ca47acf69222e82530e89111dd9d14f9b970ab2cd3a1c2c78f0c4fbba4f4";
+    sha256 = "3c07765308f091d81b6735d4f2242bb43c332cc3461cae60543df6b10967fe27";
   };
 
-  checkInputs = [ pytest glibcLocales moto ];
+  checkInputs = [ pytest glibcLocales moto hypothesis ];
 
-  buildInputs = [] ++ optional isDarwin libcxx;
+  nativeBuildInputs = [ cython ];
+  buildInputs = optional isDarwin libcxx;
   propagatedBuildInputs = [
-    cython
     dateutil
     scipy
     numexpr
@@ -82,10 +84,17 @@ in buildPythonPackage rec {
     "io"
     # KeyError Timestamp
     "test_to_excel"
+    # ordering logic has changed
+    "numpy_ufuncs_other"
+    "order_without_freq"
+    # tries to import from pandas.tests post install
+    "util_in_top_level"
   ] ++ optionals isDarwin [
     "test_locale"
     "test_clipboard"
   ]);
+
+  doCheck = !stdenv.isAarch64; # upstream doesn't test this architecture
 
   checkPhase = ''
     runHook preCheck
@@ -94,8 +103,8 @@ in buildPythonPackage rec {
   #       Until then we disable the tests.
   + optionalString isDarwin ''
     # Fake the impure dependencies pbpaste and pbcopy
-    echo "#!/bin/sh" > pbcopy
-    echo "#!/bin/sh" > pbpaste
+    echo "#!${runtimeShell}" > pbcopy
+    echo "#!${runtimeShell}" > pbpaste
     chmod a+x pbcopy pbpaste
     export PATH=$(pwd):$PATH
   '' + ''
@@ -107,7 +116,7 @@ in buildPythonPackage rec {
     # https://github.com/pandas-dev/pandas/issues/14866
     # pandas devs are no longer testing i686 so safer to assume it's broken
     broken = stdenv.isi686;
-    homepage = http://pandas.pydata.org/;
+    homepage = https://pandas.pydata.org/;
     description = "Python Data Analysis Library";
     license = stdenv.lib.licenses.bsd3;
     maintainers = with stdenv.lib.maintainers; [ raskin fridh knedlsepp ];

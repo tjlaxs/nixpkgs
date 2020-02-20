@@ -1,23 +1,34 @@
 { stdenv, fetchFromGitHub
 , cmake, flex, bison
 , libxml2, python
+, libusb1, runtimeShell
 }:
 
 stdenv.mkDerivation rec {
-  name = "libiio-${version}";
-  version = "0.15";
+  pname = "libiio";
+  version = "0.19";
 
   src = fetchFromGitHub {
     owner  = "analogdevicesinc";
     repo   = "libiio";
     rev    = "refs/tags/v${version}";
-    sha256 = "05sbvvjka03qi080ad6g2y6gfwqp3n3zv7dpv237dym0zjyxqfa7";
+    sha256 = "1r67h5mayx9krh3mmzs5vz20mvwb2lw04hpbyyisygl01ndc77kq";
   };
 
   outputs = [ "out" "lib" "dev" "python" ];
 
   nativeBuildInputs = [ cmake flex bison ];
-  buildInputs = [ libxml2 ];
+  buildInputs = [ libxml2 libusb1 ];
+
+  postPatch = ''
+    substituteInPlace libiio.rules.cmakein \
+      --replace /bin/sh ${runtimeShell}
+  '';
+
+  # since we can't expand $out in cmakeFlags
+  preConfigure = ''
+    cmakeFlags="$cmakeFlags -DUDEV_RULES_INSTALL_DIR=$out/etc/udev/rules.d"
+  '';
 
   postInstall = ''
     mkdir -p $python/lib/${python.libPrefix}/site-packages/
