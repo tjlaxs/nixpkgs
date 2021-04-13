@@ -7,11 +7,11 @@
 
 buildPythonPackage rec {
   pname = "isbnlib";
-  version = "3.9.10";
+  version = "3.10.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1a389556cc5cf82b7ad95924710101e3bd06d809d6f889a3f437975b275af944";
+    sha256 = "sha256-gbMxV9qOLCpIH3rUceG1ds9ZUpjwOv1gyYL3GLkS3Ik=";
   };
 
   checkInputs = [
@@ -22,10 +22,12 @@ buildPythonPackage rec {
   # requires network connection
   doCheck = false;
 
+  pythonImportsCheck = [ "isbnlib" ];
+
   meta = with lib; {
     description = "Extract, clean, transform, hyphenate and metadata for ISBNs";
-    homepage = https://github.com/xlcnd/isbnlib;
-    license = licenses.lgpl3;
+    homepage = "https://github.com/xlcnd/isbnlib";
+    license = licenses.lgpl3Plus;
     maintainers = with maintainers; [ dotlambda ];
   };
 }

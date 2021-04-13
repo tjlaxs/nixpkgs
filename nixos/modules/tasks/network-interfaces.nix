@@ -13,7 +13,7 @@ let
 
   slaves = concatMap (i: i.interfaces) (attrValues cfg.bonds)
     ++ concatMap (i: i.interfaces) (attrValues cfg.bridges)
-    ++ concatMap (i: i.interfaces) (attrValues cfg.vswitches);
+    ++ concatMap (i: attrNames (filterAttrs (name: config: ! (config.type == "internal" || hasAttr name cfg.interfaces)) i.interfaces)) (attrValues cfg.vswitches);
 
   slaveIfs = map (i: cfg.interfaces.${i}) (filter (i: cfg.interfaces ? ${i}) slaves);
 
@@ -283,7 +283,7 @@ let
         default = false;
         type = types.bool;
         description = ''
-          Turn on proxy_arp for this device (and proxy_ndp for ipv6).
+          Turn on proxy_arp for this device.
           This is mainly useful for creating pseudo-bridges between a real
           interface and a virtual network such as VPN or a virtual machine for
           interfaces that don't support real bridging (most wlan interfaces).
@@ -336,6 +336,32 @@ let
 
   };
 
+  vswitchInterfaceOpts = {name, ...}: {
+
+    options = {
+
+      name = mkOption {
+        description = "Name of the interface";
+        example = "eth0";
+        type = types.str;
+      };
+
+      vlan = mkOption {
+        description = "Vlan tag to apply to interface";
+        example = 10;
+        type = types.nullOr types.int;
+        default = null;
+      };
+
+      type = mkOption {
+        description = "Openvswitch type to assign to interface";
+        example = "internal";
+        type = types.nullOr types.str;
+        default = null;
+      };
+    };
+  };
+
   hexChars = stringToCharacters "0123456789abcdef";
 
   isHexString = s: all (c: elem c hexChars) (stringToCharacters (toLower s));
@@ -350,10 +376,43 @@ in
 
     networking.hostName = mkOption {
       default = "nixos";
-      type = types.str;
+      # Only allow hostnames without the domain name part (i.e. no FQDNs, see
+      # e.g. "man 5 hostname") and require valid DNS labels (recommended
+      # syntax). Note: We also allow underscores for compatibility/legacy
+      # reasons (as undocumented feature):
+      type = types.strMatching
+        "^$|^[[:alnum:]]([[:alnum:]_-]{0,61}[[:alnum:]])?$";
       description = ''
-        The name of the machine.  Leave it empty if you want to obtain
-        it from a DHCP server (if using DHCP).
+        The name of the machine. Leave it empty if you want to obtain it from a
+        DHCP server (if using DHCP). The hostname must be a valid DNS label (see
+        RFC 1035 section 2.3.1: "Preferred name syntax", RFC 1123 section 2.1:
+        "Host Names and Numbers") and as such must not contain the domain part.
+        This means that the hostname must start with a letter or digit,
+        end with a letter or digit, and have as interior characters only
+        letters, digits, and hyphen. The maximum length is 63 characters.
+        Additionally it is recommended to only use lower-case characters.
+        If (e.g. for legacy reasons) a FQDN is required as the Linux kernel
+        network node hostname (uname --nodename) the option
+        boot.kernel.sysctl."kernel.hostname" can be used as a workaround (but
+        the 64 character limit still applies).
+      '';
+    };
+
+    networking.fqdn = mkOption {
+      readOnly = true;
+      type = types.str;
+      default = if (cfg.hostName != "" && cfg.domain != null)
+        then "${cfg.hostName}.${cfg.domain}"
+        else throw ''
+          The FQDN is required but cannot be determined. Please make sure that
+          both networking.hostName and networking.domain are set properly.
+        '';
+      defaultText = literalExample ''''${networking.hostName}.''${networking.domain}'';
+      description = ''
+        The fully qualified domain name (FQDN) of this host. It is the result
+        of combining networking.hostName and networking.domain. Using this
+        option will result in an evaluation error if the hostname is empty or
+        no domain is specified.
       '';
     };
 
@@ -372,6 +431,9 @@ in
         (this derives it from the machine-id that systemd generates) or
 
         <literal>head -c4 /dev/urandom | od -A none -t x4</literal>
+
+        The primary use case is to ensure when using ZFS that a pool isn't imported
+        accidentally on a wrong machine.
       '';
     };
 
@@ -430,7 +492,7 @@ in
 
     networking.search = mkOption {
       default = [];
-      example = [ "example.com" "local.domain" ];
+      example = [ "example.com" "home.arpa" ];
       type = types.listOf types.str;
       description = ''
         The list of search paths used when resolving domain names.
@@ -439,7 +501,7 @@ in
 
     networking.domain = mkOption {
       default = null;
-      example = "home";
+      example = "home.arpa";
       type = types.nullOr types.str;
       description = ''
         The domain.  It can be left empty if it is auto-detected through DHCP.
@@ -480,14 +542,14 @@ in
         <option>networking.useDHCP</option> is true, then every
         interface not listed here will be configured using DHCP.
       '';
-      type = with types; loaOf (submodule interfaceOpts);
+      type = with types; attrsOf (submodule interfaceOpts);
     };
 
     networking.vswitches = mkOption {
       default = { };
       example =
-        { vs0.interfaces = [ "eth0" "eth1" ];
-          vs1.interfaces = [ "eth2" "wlan0" ];
+        { vs0.interfaces = { eth0 = { }; lo1 = { type="internal"; }; };
+          vs1.interfaces = [ { name = "eth2"; } { name = "lo2"; type="internal"; } ];
         };
       description =
         ''
@@ -504,9 +566,8 @@ in
 
           interfaces = mkOption {
             example = [ "eth0" "eth1" ];
-            type = types.listOf types.str;
-            description =
-              "The physical network interfaces connected by the vSwitch.";
+            description = "The physical network interfaces connected by the vSwitch.";
+            type = with types; attrsOf (submodule vswitchInterfaceOpts);
           };
 
           controllers = mkOption {
@@ -527,6 +588,25 @@ in
             description = ''
               OpenFlow rules to insert into the Open vSwitch. All <literal>openFlowRules</literal> are
               loaded with <literal>ovs-ofctl</literal> within one atomic operation.
+            '';
+          };
+
+          # TODO: custom "openflow version" type, with list from existing openflow protocols
+          supportedOpenFlowVersions = mkOption {
+            type = types.listOf types.str;
+            example = [ "OpenFlow10" "OpenFlow13" "OpenFlow14" ];
+            default = [ "OpenFlow13" ];
+            description = ''
+              Supported versions to enable on this switch.
+            '';
+          };
+
+          # TODO: use same type as elements from supportedOpenFlowVersions
+          openFlowVersion = mkOption {
+            type = types.str;
+            default = "OpenFlow13";
+            description = ''
+              Version of OpenFlow protocol to use when communicating with the switch internally (e.g. with <literal>openFlowRules</literal>).
             '';
           };
 
@@ -590,19 +670,23 @@ in
 
     networking.bonds =
       let
-        driverOptionsExample = {
-          miimon = "100";
-          mode = "active-backup";
-        };
+        driverOptionsExample =  ''
+          {
+            miimon = "100";
+            mode = "active-backup";
+          }
+        '';
       in mkOption {
         default = { };
-        example = literalExample {
-          bond0 = {
-            interfaces = [ "eth0" "wlan0" ];
-            driverOptions = driverOptionsExample;
-          };
-          anotherBond.interfaces = [ "enp4s0f0" "enp4s0f1" "enp5s0f0" "enp5s0f1" ];
-        };
+        example = literalExample ''
+          {
+            bond0 = {
+              interfaces = [ "eth0" "wlan0" ];
+              driverOptions = ${driverOptionsExample};
+            };
+            anotherBond.interfaces = [ "enp4s0f0" "enp4s0f1" "enp5s0f0" "enp5s0f1" ];
+          }
+        '';
         description = ''
           This option allows you to define bond devices that aggregate multiple,
           underlying networking interfaces together. The value of this option is
@@ -687,12 +771,14 @@ in
 
     networking.macvlans = mkOption {
       default = { };
-      example = literalExample {
-        wan = {
-          interface = "enp2s0";
-          mode = "vepa";
-        };
-      };
+      example = literalExample ''
+        {
+          wan = {
+            interface = "enp2s0";
+            mode = "vepa";
+          };
+        }
+      '';
       description = ''
         This option allows you to define macvlan interfaces which should
         be automatically created.
@@ -720,18 +806,20 @@ in
 
     networking.sits = mkOption {
       default = { };
-      example = literalExample {
-        hurricane = {
-          remote = "10.0.0.1";
-          local = "10.0.0.22";
-          ttl = 255;
-        };
-        msipv6 = {
-          remote = "192.168.0.1";
-          dev = "enp3s0";
-          ttl = 127;
-        };
-      };
+      example = literalExample ''
+        {
+          hurricane = {
+            remote = "10.0.0.1";
+            local = "10.0.0.22";
+            ttl = 255;
+          };
+          msipv6 = {
+            remote = "192.168.0.1";
+            dev = "enp3s0";
+            ttl = 127;
+          };
+        }
+      '';
       description = ''
         This option allows you to define 6-to-4 interfaces which should be automatically created.
       '';
@@ -782,16 +870,18 @@ in
 
     networking.vlans = mkOption {
       default = { };
-      example = literalExample {
-        vlan0 = {
-          id = 3;
-          interface = "enp3s0";
-        };
-        vlan1 = {
-          id = 1;
-          interface = "wlan0";
-        };
-      };
+      example = literalExample ''
+        {
+          vlan0 = {
+            id = 3;
+            interface = "enp3s0";
+          };
+          vlan1 = {
+            id = 1;
+            interface = "wlan0";
+          };
+        }
+      '';
       description =
         ''
           This option allows you to define vlan devices that tag packets
@@ -824,24 +914,26 @@ in
 
     networking.wlanInterfaces = mkOption {
       default = { };
-      example = literalExample {
-        wlan-station0 = {
-            device = "wlp6s0";
-        };
-        wlan-adhoc0 = {
-            type = "ibss";
-            device = "wlp6s0";
-            mac = "02:00:00:00:00:01";
-        };
-        wlan-p2p0 = {
-            device = "wlp6s0";
-            mac = "02:00:00:00:00:02";
-        };
-        wlan-ap0 = {
-            device = "wlp6s0";
-            mac = "02:00:00:00:00:03";
-        };
-      };
+      example = literalExample ''
+        {
+          wlan-station0 = {
+              device = "wlp6s0";
+          };
+          wlan-adhoc0 = {
+              type = "ibss";
+              device = "wlp6s0";
+              mac = "02:00:00:00:00:01";
+          };
+          wlan-p2p0 = {
+              device = "wlp6s0";
+              mac = "02:00:00:00:00:02";
+          };
+          wlan-ap0 = {
+              device = "wlp6s0";
+              mac = "02:00:00:00:00:03";
+          };
+        }
+      '';
       description =
         ''
           Creating multiple WLAN interfaces on top of one physical WLAN device (NIC).
@@ -975,6 +1067,11 @@ in
         message = ''
           Temporary addresses are only needed when IPv6 is enabled.
         '';
+      })) ++ (forEach interfaces (i: {
+        assertion = (i.virtual && i.virtualType == "tun") -> i.macAddress == null;
+        message = ''
+          Setting a MAC Address for tun device ${i.name} isn't supported.
+        '';
       })) ++ [
         {
           assertion = cfg.hostId == null || (stringLength cfg.hostId == 8 && isHexString cfg.hostId);
@@ -983,7 +1080,6 @@ in
       ];
 
     boot.kernelModules = [ ]
-      ++ optional cfg.enableIPv6 "ipv6"
       ++ optional hasVirtuals "tun"
       ++ optional hasSits "sit"
       ++ optional hasBonds "bonding";
@@ -994,11 +1090,11 @@ in
       optionalString hasBonds "options bonding max_bonds=0";
 
     boot.kernel.sysctl = {
+      "net.ipv4.conf.all.forwarding" = mkDefault (any (i: i.proxyARP) interfaces);
       "net.ipv6.conf.all.disable_ipv6" = mkDefault (!cfg.enableIPv6);
       "net.ipv6.conf.default.disable_ipv6" = mkDefault (!cfg.enableIPv6);
-      "net.ipv6.conf.all.forwarding" = mkDefault (any (i: i.proxyARP) interfaces);
     } // listToAttrs (flip concatMap (filter (i: i.proxyARP) interfaces)
-        (i: forEach [ "4" "6" ] (v: nameValuePair "net.ipv${v}.conf.${replaceChars ["."] ["/"] i.name}.proxy_arp" true)))
+        (i: [(nameValuePair "net.ipv4.conf.${replaceChars ["."] ["/"] i.name}.proxy_arp" true)]))
       // listToAttrs (forEach interfaces
         (i: let
           opt = i.tempAddress;
@@ -1048,14 +1144,13 @@ in
 
     environment.systemPackages =
       [ pkgs.host
-        pkgs.iproute
+        pkgs.iproute2
         pkgs.iputils
         pkgs.nettools
       ]
       ++ optionals config.networking.wireless.enable [
         pkgs.wirelesstools # FIXME: obsolete?
         pkgs.iw
-        pkgs.rfkill
       ]
       ++ bridgeStp;
 
@@ -1076,7 +1171,7 @@ in
         wantedBy = [ "network.target" ];
         after = [ "network-pre.target" ];
         unitConfig.ConditionCapability = "CAP_NET_ADMIN";
-        path = [ pkgs.iproute ];
+        path = [ pkgs.iproute2 ];
         serviceConfig.Type = "oneshot";
         serviceConfig.RemainAfterExit = true;
         script = ''
@@ -1084,38 +1179,7 @@ in
           ${cfg.localCommands}
         '';
       };
-    } // (listToAttrs (forEach interfaces (i:
-      let
-        deviceDependency = if (config.boot.isContainer || i.name == "lo")
-          then []
-          else [ (subsystemDevice i.name) ];
-      in
-      nameValuePair "network-link-${i.name}"
-      { description = "Link configuration of ${i.name}";
-        wantedBy = [ "network-interfaces.target" ];
-        before = [ "network-interfaces.target" ];
-        bindsTo = deviceDependency;
-        after = [ "network-pre.target" ] ++ deviceDependency;
-        path = [ pkgs.iproute ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script =
-          ''
-            echo "Configuring link..."
-          '' + optionalString (i.macAddress != null) ''
-            echo "setting MAC address to ${i.macAddress}..."
-            ip link set "${i.name}" address "${i.macAddress}"
-          '' + optionalString (i.mtu != null) ''
-            echo "setting MTU to ${toString i.mtu}..."
-            ip link set "${i.name}" mtu "${toString i.mtu}"
-          '' + ''
-            echo -n "bringing up interface... "
-            ip link set "${i.name}" up && echo "done" || (echo "failed"; exit 1)
-          '';
-      })));
-
+    };
     services.mstpd = mkIf needsMstpd { enable = true; };
 
     virtualisation.vswitch = mkIf (cfg.vswitches != { }) { enable = true; };
@@ -1185,7 +1249,7 @@ in
               ${optionalString (current.type == "mesh" && current.meshID!=null) "${pkgs.iw}/bin/iw dev ${device} set meshid ${current.meshID}"}
               ${optionalString (current.type == "monitor" && current.flags!=null) "${pkgs.iw}/bin/iw dev ${device} set monitor ${current.flags}"}
               ${optionalString (current.type == "managed" && current.fourAddr!=null) "${pkgs.iw}/bin/iw dev ${device} set 4addr ${if current.fourAddr then "on" else "off"}"}
-              ${optionalString (current.mac != null) "${pkgs.iproute}/bin/ip link set dev ${device} address ${current.mac}"}
+              ${optionalString (current.mac != null) "${pkgs.iproute2}/bin/ip link set dev ${device} address ${current.mac}"}
             '';
 
             # Udev script to execute for a new WLAN interface. The script configures the new WLAN interface.
@@ -1196,11 +1260,11 @@ in
               ${optionalString (new.type == "mesh" && new.meshID!=null) "${pkgs.iw}/bin/iw dev ${device} set meshid ${new.meshID}"}
               ${optionalString (new.type == "monitor" && new.flags!=null) "${pkgs.iw}/bin/iw dev ${device} set monitor ${new.flags}"}
               ${optionalString (new.type == "managed" && new.fourAddr!=null) "${pkgs.iw}/bin/iw dev ${device} set 4addr ${if new.fourAddr then "on" else "off"}"}
-              ${optionalString (new.mac != null) "${pkgs.iproute}/bin/ip link set dev ${device} address ${new.mac}"}
+              ${optionalString (new.mac != null) "${pkgs.iproute2}/bin/ip link set dev ${device} address ${new.mac}"}
             '';
 
             # Udev attributes for systemd to name the device and to create a .device target.
-            systemdAttrs = n: ''NAME:="${n}", ENV{INTERFACE}:="${n}", ENV{SYSTEMD_ALIAS}:="/sys/subsystem/net/devices/${n}", TAG+="systemd"'';
+            systemdAttrs = n: ''NAME:="${n}", ENV{INTERFACE}="${n}", ENV{SYSTEMD_ALIAS}="/sys/subsystem/net/devices/${n}", TAG+="systemd"'';
           in
           flip (concatMapStringsSep "\n") (attrNames wlanDeviceInterfaces) (device:
             let

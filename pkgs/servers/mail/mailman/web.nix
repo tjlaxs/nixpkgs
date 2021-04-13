@@ -1,27 +1,31 @@
 { buildPythonPackage, lib, fetchgit, isPy3k
-, git, makeWrapper, sassc, hyperkitty, postorius, whoosh
-, django
+, git, makeWrapper, sassc, hyperkitty, postorius, whoosh, setuptools-scm
 }:
 
 buildPythonPackage rec {
-  pname = "mailman-web-unstable";
-  version = "2019-09-29";
+  pname = "mailman-web";
+  version = "unstable-2021-04-10";
   disabled = !isPy3k;
 
   src = fetchgit {
     url = "https://gitlab.com/mailman/mailman-web";
-    rev = "d17203b4d6bdc71c2b40891757f57a32f3de53d5";
-    sha256 = "124cxr4vfi1ibgxygk4l74q4fysx0a6pga1kk9p5wq2yvzwg9z3n";
+    rev = "19a7abe27dd3bc39c0250440de073f0adecd4da1";
+    sha256 = "0h25140n2jaisl0ri5x7gdmbypiys8vlq8dql1zmaxvq459ybxkn";
     leaveDotGit = true;
   };
 
   # This is just so people installing from pip also get uwsgi
   # installed, AFAICT.
+
+  # Django is depended on transitively by hyperkitty and postorius,
+  # and mailman_web has overly restrictive version bounds on it, so
+  # let's remove it.
   postPatch = ''
     sed -i '/^  uwsgi$/d' setup.cfg
+    sed -i '/^  Django/d' setup.cfg
   '';
 
-  nativeBuildInputs = [ git makeWrapper ];
+  nativeBuildInputs = [ git setuptools-scm makeWrapper ];
   propagatedBuildInputs = [ hyperkitty postorius whoosh ];
 
   # Tries to check runtime configuration.
@@ -34,9 +38,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Django project for Mailman 3 web interface";
-    license = licenses.gpl3;
-    maintainers = with maintainers; [ peti qyliss ];
-    # mailman-web requires django < 2.2
-    broken = versionOlder "2.2" django.version;
+    license = licenses.gpl3Plus;
+    maintainers = with maintainers; [ peti qyliss m1cr0man ];
   };
 }

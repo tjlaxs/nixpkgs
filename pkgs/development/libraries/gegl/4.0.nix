@@ -1,11 +1,10 @@
-{ stdenv
+{ lib, stdenv
 , fetchurl
-, fetchpatch
-, pkgconfig
+, pkg-config
 , vala
 , gobject-introspection
 , gtk-doc
-, docbook_xsl
+, docbook-xsl-nons
 , docbook_xml_dtd_43
 , glib
 , babl
@@ -15,9 +14,11 @@
 , librsvg
 , lensfun
 , libspiro
+, maxflow
 , netsurf
 , pango
 , poly2tri-c
+, poppler
 , bzip2
 , json-glib
 , gettext
@@ -34,30 +35,25 @@
 
 stdenv.mkDerivation rec {
   pname = "gegl";
-  version = "0.4.20";
+  version = "0.4.28";
 
   outputs = [ "out" "dev" "devdoc" ];
   outputBin = "dev";
 
   src = fetchurl {
-    url = "https://download.gimp.org/pub/gegl/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1zrxnxlhn0jmshg4n2m2xlgi886w059ynkiiihm7rpi05fs8pg93";
+    url = "https://download.gimp.org/pub/gegl/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "sha256-HRENhXfVTMo7NCOTFb03xXzLJ91DVWVQdKLSs/2JeQA=";
   };
 
-  patches = [
-    # Remove gegl:simple / backend-file test that times out frequently
-    ./patches/no-simple-backend-file-test.patch
-  ];
-
   nativeBuildInputs = [
-    pkgconfig
+    pkg-config
     gettext
     meson
     ninja
     vala
     gobject-introspection
     gtk-doc
-    docbook_xsl
+    docbook-xsl-nons
     docbook_xml_dtd_43
   ];
 
@@ -68,9 +64,11 @@ stdenv.mkDerivation rec {
     librsvg
     lensfun
     libspiro
+    maxflow
     netsurf.libnsgif
     pango
     poly2tri-c
+    poppler
     bzip2
     libraw
     libwebp
@@ -78,7 +76,7 @@ stdenv.mkDerivation rec {
     luajit
     openexr
     suitesparse
-  ] ++ stdenv.lib.optional stdenv.isDarwin OpenCL;
+  ] ++ lib.optional stdenv.isDarwin OpenCL;
 
   # for gegl-4.0.pc
   propagatedBuildInputs = [
@@ -112,10 +110,10 @@ stdenv.mkDerivation rec {
   # tests fail to connect to the com.apple.fonts daemon in sandboxed mode
   doCheck = !stdenv.isDarwin;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Graph-based image processing framework";
-    homepage = http://www.gegl.org;
-    license = licenses.gpl3;
+    homepage = "https://www.gegl.org";
+    license = licenses.lgpl3Plus;
     maintainers = with maintainers; [ jtojnar ];
     platforms = platforms.unix;
   };

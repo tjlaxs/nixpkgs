@@ -4,19 +4,23 @@
 , jupyterlab_server
 , notebook
 , pythonOlder
+, jupyter-packaging
+, nbclassic
 }:
 
 buildPythonPackage rec {
   pname = "jupyterlab";
-  version = "1.2.6";
+  version = "3.0.12";
   disabled = pythonOlder "3.5";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0mc3nrj7fc5q2ajr09m261j386jsp8qjljg8anghlh8czc9ln4s2";
+    sha256 = "929c60d7fb4aa704084c02d8ededc209b8b378e0b3adab46158b7fa6acc24230";
   };
 
-  propagatedBuildInputs = [ jupyterlab_server notebook ];
+  nativeBuildInputs = [ jupyter-packaging ];
+
+  propagatedBuildInputs = [ jupyterlab_server notebook nbclassic ];
 
   makeWrapperArgs = [
     "--set" "JUPYTERLAB_DIR" "$out/share/jupyter/lab"
@@ -24,6 +28,8 @@ buildPythonPackage rec {
 
   # Depends on npm
   doCheck = false;
+
+  pythonImportsCheck = [ "jupyterlab" ];
 
   meta = with lib; {
     description = "Jupyter lab environment notebook server extension.";
